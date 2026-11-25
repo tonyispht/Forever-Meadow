@@ -124,6 +124,10 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
 /* ---------- meadow view ---------- */
 .stage{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;z-index:1}
 .world{position:absolute;inset:0;pointer-events:none}
+.orows{margin:6px 0 4px}.orows .crow{margin-top:2px}
+.pet{--rim:#ffd9a0;--rimo:.5}
+#app[data-time=night] .pet{--rim:#9fb8ff;--rimo:.42}
+#app[data-time=night] .pet-host{filter:brightness(.86) saturate(.92)}
 .pet-host{position:absolute;left:0;top:0;pointer-events:none;will-change:transform}
 .pet-host svg{width:100%;height:100%;display:block;overflow:visible}
 .item{position:absolute;left:0;top:0;width:52px;height:52px;transform-origin:50% 100%;pointer-events:none;transition:opacity .7s,filter .7s}
@@ -299,20 +303,24 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
           <div id="angelRows" style="margin-top:8px"></div>
         </section>
 
-        <section class="card">
+        <section class="card" id="wardrobe">
           <h2>Wardrobe</h2>
           <p class="sub">Dress them the way you remember.</p>
           <h3 style="margin-top:6px">Clothing &amp; jackets</h3>
           <div class="chips" id="topChips"></div>
+          <div class="orows" data-rows="otop otrim"></div>
           <h3>Neckwear</h3>
           <div class="chips" id="neckChips"></div>
+          <div class="orows" data-rows="oneck"></div>
           <h3>Hats &amp; hair</h3>
           <div class="chips" id="hatChips"></div>
+          <div class="orows" data-rows="ohat"></div>
           <h3>Glasses</h3>
           <div class="chips" id="glassChips"></div>
+          <div class="orows" data-rows="oglass"></div>
           <h3>Walking gear</h3>
           <div class="chips" id="gearChips"></div>
-          <div id="outfitRows" style="margin-top:8px"></div>
+          <div class="orows" data-rows="oharness oleash"></div>
         </section>
       </div>
       <p class="foot-note">Missing them is a sign of how much you loved them. Take all the time you need.</p>
@@ -446,7 +454,7 @@ var TOPDEF={sweater:'#e8728f',puffer:'#58a6d8',raincoat:'#f2c46d',hoodie:'#8a79d
 var NECKS={none:'None',bandana:'Bandana',bowtie:'Bow tie',scarf:'Scarf',bell:'Bell'};
 var HATS={none:'None',partyhat:'Party hat',beanie:'Beanie',flowers:'Flower crown',bow:'Hair bow'};
 var GLASSES={none:'None',round:'Round glasses',sun:'Sunglasses'};
-function defOutfit(){return {top:'none',topColor:'#e8728f',neck:'none',neckColor:'#e25b4f',hat:'none',hatColor:'#f2c46d',glasses:'none',glassColor:'#2a2a36',harness:false,harnessColor:'#58a6d8',leash:false,leashColor:'#e25b4f'}}
+function defOutfit(){return {top:'none',topColor:'#e8728f',topTrim:null,neck:'none',neckColor:'#e25b4f',hat:'none',hatColor:'#f2c46d',glasses:'none',glassColor:'#2a2a36',harness:false,harnessColor:'#58a6d8',leash:false,leashColor:'#e25b4f'}}
 function fixPet(p){p.age=p.age==='baby'?'baby':'adult';p.outfit=Object.assign(defOutfit(),p.outfit||{});return p}
 var HALOC=['#f2c46d','#ffe9a6','#ffd1e0','#cfe8ff','#d8c7ff'];
 var WINGC=['#ffffff','#fff1d6','#ffe3ec','#e1efff','#eadfff'];
@@ -583,7 +591,7 @@ function buildPet(cfg,uid,o){
   bodyOv+='<ellipse cx="'+cx+'" cy="'+(bcy+bry-4)+'" rx="'+bw+'" ry="26" fill="#000" opacity=".07"/>';
   var furBody=fur(cx,bcy,bw,bry,230,furLen,cx,bcy-bry*.9);
   var body=fuzz(cx,bcy,bw,bry,o.thumb?30:60,fuzzLen,-.1*Math.PI,1.1*Math.PI,coat)
-    +'<ellipse cx="'+cx+'" cy="'+bcy+'" rx="'+bw+'" ry="'+bry+'" fill="'+coat+'" '+st+'/><g clip-path="url(#'+uid+'b)">'+bodyOv+furBody+'</g><ellipse cx="'+cx+'" cy="'+bcy+'" rx="'+bw+'" ry="'+bry+'" fill="url(#'+uid+'bs)"/>';
+    +'<ellipse cx="'+cx+'" cy="'+bcy+'" rx="'+bw+'" ry="'+bry+'" fill="'+coat+'" '+st+'/><g clip-path="url(#'+uid+'b)">'+bodyOv+furBody+'</g><ellipse cx="'+cx+'" cy="'+bcy+'" rx="'+bw+'" ry="'+bry+'" fill="url(#'+uid+'bs)"/><ellipse cx="'+cx+'" cy="'+bcy+'" rx="'+bw+'" ry="'+bry+'" fill="url(#'+uid+'rm)"/>';
   var chinSh='<ellipse cx="'+cx+'" cy="'+(cy+hh+2)+'" rx="'+(hw*.8)+'" ry="24" fill="url(#'+uid+'cs)"/>';
   var collar='';
   if(collarOn){
@@ -597,7 +605,7 @@ function buildPet(cfg,uid,o){
   var OF=cfg.outfit||{}, wear=!o.thumb, cloth='', neckwear='', gear='', leashSVG='', hatSVG='', glassSVG='', headH=0;
   if(wear){
     var topY=bcy-bry, botY=bcy+bry, legXs=[lx,rx];
-    var tc=OF.topColor||'#e8728f', tlt=shade(tc,.24), tdk=shade(tc,-.2), tln=shade(tc,-.42);
+    var tc=OF.topColor||'#e8728f', tlt=shade(tc,.24), tdk=OF.topTrim||shade(tc,-.2), tln=shade(tc,-.42);
     var tst='stroke="'+tln+'" stroke-width="2.5" stroke-linejoin="round"';
     var sleeve=function(x,puff){return '<rect x="'+(x-20)+'" y="'+(bcy+6)+'" width="40" height="'+(372-bcy-6)+'" rx="15" fill="'+tc+'" '+tst+'/>'+(puff?'<path d="M'+(x-18)+' '+(bcy+34)+' Q'+x+' '+(bcy+42)+' '+(x+18)+' '+(bcy+34)+'" fill="none" stroke="'+tln+'" stroke-width="2" opacity=".6"/>':'')+'<rect x="'+(x-21)+'" y="364" width="42" height="11" rx="5" fill="'+tdk+'" '+tst+'/>'};
     var top=OF.top||'none', tor='', slv='', ring='';
@@ -761,9 +769,11 @@ function buildPet(cfg,uid,o){
     +'<clipPath id="'+uid+'h"><ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'"/></clipPath>'
     +'<clipPath id="'+uid+'b"><ellipse cx="'+cx+'" cy="'+bcy+'" rx="'+bw+'" ry="'+bry+'"/></clipPath>'
     +'<radialGradient id="'+uid+'mk" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="'+acc+'" stop-opacity=".96"/><stop offset=".55" stop-color="'+acc+'" stop-opacity=".78"/><stop offset="1" stop-color="'+acc+'" stop-opacity="0"/></radialGradient>'
-    +'<radialGradient id="'+uid+'hs" cx=".4" cy=".3" r=".78"><stop offset="0" stop-color="#fff" stop-opacity=".24"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".82" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>'
-    +'<radialGradient id="'+uid+'bs" cx=".42" cy=".28" r=".82"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>'
-    +'<linearGradient id="'+uid+'ls" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".2"/><stop offset=".35" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>'
+    +'<radialGradient id="'+uid+'hs" cx=".62" cy=".28" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".24"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".82" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>'
+    +'<radialGradient id="'+uid+'bs" cx=".6" cy=".26" r=".84"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>'
+    +'<linearGradient id="'+uid+'ls" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset=".6" stop-color="#fff" stop-opacity=".1"/><stop offset=".92" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".1"/></linearGradient>'
+    +'<linearGradient id="'+uid+'rm" x1="1" y1=".15" x2=".64" y2=".55"><stop offset="0" style="stop-color:var(--rim,#ffd9a0);stop-opacity:var(--rimo,.5)"/><stop offset="1" style="stop-color:var(--rim,#ffd9a0);stop-opacity:0"/></linearGradient>'
+    +'<radialGradient id="'+uid+'gs" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#2a1830" stop-opacity=".42"/><stop offset=".6" stop-color="#2a1830" stop-opacity=".16"/><stop offset="1" stop-color="#2a1830" stop-opacity="0"/></radialGradient>'
     +'<linearGradient id="'+uid+'ea" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>'
     +'<radialGradient id="'+uid+'cs"><stop offset="0" stop-color="#000" stop-opacity=".4"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'
     +'<radialGradient id="'+uid+'mz" cx=".5" cy=".38" r=".66"><stop offset="0" stop-color="'+shade(mzFill,.1)+'"/><stop offset=".7" stop-color="'+mzFill+'"/><stop offset="1" stop-color="'+shade(mzFill,-.16)+'"/></radialGradient>'
@@ -778,14 +788,14 @@ function buildPet(cfg,uid,o){
   var label=(cfg.name?esc(cfg.name)+', ':'')+'a '+(baby?(cat?'kitten, ':'puppy, '):'')+esc(breedOf(cfg).name.toLowerCase());
   return '<svg class="pet '+(cat?'cat':'dog')+(o.static?' static':'')+'" viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+label+'" style="--glow:'+(o.glow==null?.55:o.glow)+';--lx:0;--ly:0;--hr:0;--sl:0;--amp:5;--wagdur:2.6s">'
     +defs
-    +'<ellipse class="shadow" cx="200" cy="391" rx="'+(bw+30)+'" ry="12" fill="#3a2438" opacity=".17"/>'
+    +'<g class="shadow"><ellipse cx="'+(188-bw*.12)+'" cy="392" rx="'+(bw+58)+'" ry="17" fill="url(#'+uid+'gs)"/><ellipse cx="196" cy="390" rx="'+(bw*.9)+'" ry="7" fill="url(#'+uid+'gs)"/></g>'
     +'<g class="pose">'+wingSVG+tailSVG
     +'<g class="body-g">'+hind+legs+body+cloth+chinSh+collar+neckwear+gear+leashSVG+'</g>'
     +'<g class="head"><g class="head-bob">'+ruff+earsBack+tufts
     +fuzz(cx,cy,hw,hh,o.thumb?30:60,fuzzLen,Math.PI*.85,Math.PI*2.15,PT.cap?acc:coat)
     +'<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'" fill="'+coat+'" '+st+'/>'
     +'<g clip-path="url(#'+uid+'h)">'+hOv+fur(cx,cy,hw,hh,260,furLen,cx,cy+hh*.38)+'</g>'
-    +'<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'" fill="url(#'+uid+'hs)"/>'
+    +'<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'" fill="url(#'+uid+'hs)"/><ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'" fill="url(#'+uid+'rm)"/>'
     +muzzle+nose+mclosed+mop+whisk+cheeks+eyeL+eyeR+glassSVG+earsFront+hatSVG+halo
     +'</g></g></g></svg>';
 }
@@ -841,7 +851,7 @@ var MSG={
    STATE
    ========================================================= */
 var KEY='forever-meadow-v1';
-var state={pet:null,hearts:0,notes:[],whispers:true};
+var state={pet:null,hearts:0,notes:[],whispers:true,music:true};
 function petFromBreed(species,id,name,keep){
   var l=BREEDS[species], b=l[0]; for(var i=0;i<l.length;i++) if(l[i].id===id) b=l[i];
   keep=keep||{};
@@ -851,8 +861,8 @@ function petFromBreed(species,id,name,keep){
     collarOn:keep.collarOn!==false,halo:keep.halo!==false,wings:keep.wings!==false,
     haloColor:keep.haloColor||'#f2c46d',wingColor:keep.wingColor||'#ffffff',outfit:Object.assign(defOutfit(),keep.outfit||{}),age:keep.age||'adult'};
 }
-function loadState(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.pet&&d.pet.colors&&BREEDS[d.pet.species]){state.pet=fixPet(d.pet);state.hearts=+d.hearts||0;state.notes=Array.isArray(d.notes)?d.notes:[];state.whispers=d.whispers!==false}}}catch(e){}}
-function saveState(){try{localStorage.setItem(KEY,JSON.stringify({pet:state.pet,hearts:state.hearts,notes:state.notes.slice(-24),whispers:state.whispers}))}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.pet&&d.pet.colors&&BREEDS[d.pet.species]){state.pet=fixPet(d.pet);state.hearts=+d.hearts||0;state.notes=Array.isArray(d.notes)?d.notes:[];state.whispers=d.whispers!==false;state.music=d.music!==false}}}catch(e){}}
+function saveState(){try{localStorage.setItem(KEY,JSON.stringify({pet:state.pet,hearts:state.hearts,notes:state.notes.slice(-24),whispers:state.whispers,music:state.music}))}catch(e){}}
 var saveT=null;function saveSoon(){clearTimeout(saveT);saveT=setTimeout(saveState,1200)}
 
 var app=$('#app');
@@ -888,6 +898,7 @@ function paintScene(cv,night){
   hill(h*.5,h*.03,.0045,1.2,pal.far);
   var mid=hill(h*.57,h*.035,.0062,3.1,pal.mid);
   function tree(x,by,s,cols,trunkW){
+    g.save();g.translate(x-70*s,by+4*s);g.scale(1,.2);var sg=g.createRadialGradient(0,0,0,0,0,150*s);sg.addColorStop(0,night?'rgba(5,8,30,.4)':'rgba(40,70,60,.34)');sg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=sg;g.beginPath();g.arc(0,0,150*s,0,6.283);g.fill();g.restore();
     g.strokeStyle=pal.trunk;g.lineCap='round';g.lineWidth=trunkW*s;g.beginPath();g.moveTo(x,by);g.quadraticCurveTo(x+6*s,by-60*s,x-4*s,by-110*s);g.stroke();
     g.lineWidth=trunkW*.45*s;g.beginPath();g.moveTo(x-2*s,by-80*s);g.quadraticCurveTo(x+26*s,by-100*s,x+44*s,by-124*s);g.moveTo(x-2*s,by-92*s);g.quadraticCurveTo(x-30*s,by-110*s,x-48*s,by-130*s);g.stroke();
     var pts=[[0,-130,40],[-44,-128,32],[44,-132,32],[-24,-160,32],[26,-162,30],[-60,-108,24],[62,-110,26],[0,-100,28]];
@@ -906,6 +917,18 @@ function paintScene(cv,night){
     g.fillStyle=col;for(var p=0;p<5;p++){var a=p*1.2566;g.beginPath();g.ellipse(fx+Math.cos(a)*fs*.9,fy+Math.sin(a)*fs*.7,fs*.8,fs*.6,a,0,6.283);g.fill()}
     g.fillStyle=pal.fc;g.beginPath();g.arc(fx,fy,fs*.5,0,6.283);g.fill();
   }
+  // warm light pool on the grass under the sun, cooler shade on the far side
+  var lp=g.createRadialGradient(sx,h*.66,0,sx,h*.66,w*.55);lp.addColorStop(0,night?'rgba(170,190,255,.14)':'rgba(255,236,170,.30)');lp.addColorStop(1,'rgba(255,236,170,0)');
+  g.save();g.beginPath();g.rect(0,h*.62,w,h*.38);g.clip();g.fillStyle=lp;g.fillRect(0,h*.62,w,h*.38);g.restore();
+  // soft light shafts from the sun
+  g.save();g.globalCompositeOperation='screen';
+  [[-.5,.07],[-.3,.05],[-.12,.08],[.08,.05],[.26,.06]].forEach(function(b){
+    var ang=Math.PI/2+b[0], len=Math.max(w,h)*1.2, wd=.09;
+    var x1=sx+Math.cos(ang-wd)*len, y1=sy+Math.sin(ang-wd)*len, x2=sx+Math.cos(ang+wd)*len, y2=sy+Math.sin(ang+wd)*len;
+    var bg=g.createLinearGradient(sx,sy,sx+Math.cos(ang)*len*.8,sy+Math.sin(ang)*len*.8);
+    bg.addColorStop(0,night?'rgba(190,200,255,'+(b[1]*.5)+')':'rgba(255,240,200,'+b[1]+')');bg.addColorStop(1,'rgba(255,240,200,0)');
+    g.fillStyle=bg;g.beginPath();g.moveTo(sx,sy);g.lineTo(x1,y1);g.lineTo(x2,y2);g.closePath();g.fill();
+  });g.restore();
   var vg=g.createRadialGradient(w/2,h*.55,Math.min(w,h)*.35,w/2,h*.55,Math.max(w,h)*.8);vg.addColorStop(0,'rgba(60,30,60,0)');vg.addColorStop(1,night?'rgba(5,5,25,.35)':'rgba(90,50,70,.14)');g.fillStyle=vg;g.fillRect(0,0,w,h);
 }
 function paintAll(){paintScene($('#sceneDay'),false);paintScene($('#sceneNight'),true)}
@@ -984,7 +1007,8 @@ var ROWS=[
  {id:'collar',label:'Collar',pal:COLLARC,get:function(p){return p.colors.collar},set:function(p,v){p.colors.collar=v},show:function(p){return p.collarOn}}
 ];
 var OUTFIT_ROWS=[
- {id:'otop',label:'Clothing color',pal:CLOTHC,get:function(p){return p.outfit.topColor},set:function(p,v){p.outfit.topColor=v},show:function(p){return p.outfit.top!=='none'}},
+ {id:'otop',label:'Clothing color',pal:CLOTHC,get:function(p){return p.outfit.topColor},set:function(p,v){p.outfit.topColor=v;p.outfit.topTrim=null},show:function(p){return p.outfit.top!=='none'}},
+ {id:'otrim',label:'Trim & cuffs',pal:CLOTHC,get:function(p){return p.outfit.topTrim||shade(p.outfit.topColor,-.2)},set:function(p,v){p.outfit.topTrim=v},show:function(p){return p.outfit.top!=='none'}},
  {id:'oneck',label:'Neckwear color',pal:CLOTHC,get:function(p){return p.outfit.neckColor},set:function(p,v){p.outfit.neckColor=v},show:function(p){return p.outfit.neck!=='none'}},
  {id:'ohat',label:'Hat & hair color',pal:CLOTHC,get:function(p){return p.outfit.hatColor},set:function(p,v){p.outfit.hatColor=v},show:function(p){return p.outfit.hat!=='none'}},
  {id:'oglass',label:'Frame color',pal:CLOTHC,get:function(p){return p.outfit.glassColor},set:function(p,v){p.outfit.glassColor=v},show:function(p){return p.outfit.glasses!=='none'}},
@@ -1003,7 +1027,7 @@ function rowHTML(r){
 function buildCreateUI(){
   $('#colorRows').innerHTML=ROWS.map(rowHTML).join('');
   $('#angelRows').innerHTML=ANGEL_ROWS.map(rowHTML).join('');
-  $('#outfitRows').innerHTML=OUTFIT_ROWS.map(rowHTML).join('');
+  OUTFIT_ROWS.forEach(function(r){$('[data-rows~="'+r.id+'"]').insertAdjacentHTML('beforeend',rowHTML(r))});
   var ofc=function(key,map){return Object.keys(map).map(function(k){return '<button type="button" class="chip" data-of="'+key+':'+k+'" aria-pressed="false">'+map[k]+'</button>'}).join('')};
   $('#topChips').innerHTML=ofc('top',TOPS);$('#neckChips').innerHTML=ofc('neck',NECKS);$('#hatChips').innerHTML=ofc('hat',HATS);$('#glassChips').innerHTML=ofc('glasses',GLASSES);
   $('#gearChips').innerHTML='<button type="button" class="chip" data-oft="harness" aria-pressed="false">Harness</button><button type="button" class="chip" data-oft="leash" aria-pressed="false">Leash</button>';
@@ -1032,7 +1056,7 @@ function syncCreate(){
   var p=state.pet;
   $('#agBaby').textContent=p.species==='cat'?'Kitten':'Puppy';$('#agBaby').setAttribute('aria-pressed',p.age==='baby');$('#agAdult').setAttribute('aria-pressed',p.age!=='baby');$('#spDog').setAttribute('aria-pressed',p.species==='dog');$('#spCat').setAttribute('aria-pressed',p.species==='cat');
   $$('.breed').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.breed===p.breed)});
-  syncRows(ROWS,$('#colorRows'));syncRows(ANGEL_ROWS,$('#angelRows'));syncRows(OUTFIT_ROWS,$('#outfitRows'));
+  syncRows(ROWS,$('#colorRows'));syncRows(ANGEL_ROWS,$('#angelRows'));syncRows(OUTFIT_ROWS,$('#wardrobe'));
   $$('[data-of]').forEach(function(c){var kv=c.dataset.of.split(':');c.setAttribute('aria-pressed',p.outfit[kv[0]]===kv[1])});
   $$('[data-oft]').forEach(function(c){c.setAttribute('aria-pressed',!!p.outfit[c.dataset.oft])});
   $$('[data-pat]').forEach(function(c){c.setAttribute('aria-pressed',c.dataset.pat===p.pattern)});
@@ -1064,8 +1088,8 @@ function wireCreate(){
     scope.addEventListener('click',function(e){var s=e.target.closest('.sw[data-v]');if(!s)return;var row=s.closest('[data-row]');var r=list.filter(function(x){return x.id===row.dataset.row})[0];r.set(state.pet,s.dataset.v);changed()});
     scope.addEventListener('input',function(e){if(e.target.type!=='color')return;var row=e.target.closest('[data-row]');var r=list.filter(function(x){return x.id===row.dataset.row})[0];r.set(state.pet,e.target.value);syncRows(list,scope);renderPreview();saveSoon()});
   }
-  colorEvents($('#colorRows'),ROWS);colorEvents($('#angelRows'),ANGEL_ROWS);colorEvents($('#outfitRows'),OUTFIT_ROWS);
-  ['topChips','neckChips','hatChips','glassChips'].forEach(function(id){$('#'+id).addEventListener('click',function(e){var c=e.target.closest('[data-of]');if(!c)return;var kv=c.dataset.of.split(':');state.pet.outfit[kv[0]]=kv[1];if(kv[0]==='top'&&TOPDEF[kv[1]])state.pet.outfit.topColor=TOPDEF[kv[1]];changed()})});
+  colorEvents($('#colorRows'),ROWS);colorEvents($('#angelRows'),ANGEL_ROWS);colorEvents($('#wardrobe'),OUTFIT_ROWS);
+  ['topChips','neckChips','hatChips','glassChips'].forEach(function(id){$('#'+id).addEventListener('click',function(e){var c=e.target.closest('[data-of]');if(!c)return;var kv=c.dataset.of.split(':');state.pet.outfit[kv[0]]=kv[1];if(kv[0]==='top'&&TOPDEF[kv[1]]){state.pet.outfit.topColor=TOPDEF[kv[1]];state.pet.outfit.topTrim=null}changed()})});
   $('#gearChips').addEventListener('click',function(e){var c=e.target.closest('[data-oft]');if(!c)return;var k=c.dataset.oft;state.pet.outfit[k]=!state.pet.outfit[k];changed()});
   $('#patternChips').addEventListener('click',function(e){var c=e.target.closest('[data-pat]');if(!c)return;state.pet.pattern=c.dataset.pat;changed()});
   $('#earChips').addEventListener('click',function(e){var c=e.target.closest('[data-ear]');if(!c)return;state.pet.ears=c.dataset.ear;changed()});
@@ -1495,8 +1519,16 @@ function wireMeadow(){
   $('#editBtn').addEventListener('click',function(){saveState();showCreate()});
   $('#musicBtn').addEventListener('click',function(){
     var b=$('#musicBtn');
-    if(Snd.isOn()){Snd.stop();b.setAttribute('aria-pressed','false');toast('Music off')}
-    else if(Snd.start()){b.setAttribute('aria-pressed','true');toast('Soft music on')}else toast("Sound isn't available here");
+    if(Snd.isOn()){Snd.stop();state.music=false;saveSoon();b.setAttribute('aria-pressed','false');toast('Music off')}
+    else if(Snd.start()){state.music=true;saveSoon();b.setAttribute('aria-pressed','true');toast('Soft music on')}else toast("Sound isn't available here");
+  });
+  /* music is on by default; browsers only allow audio after a first tap, so start on the first touch anywhere */
+  function autoMusic(){
+    if(!state.music||Snd.isOn())return;
+    if(Snd.start())$('#musicBtn').setAttribute('aria-pressed','true');
+  }
+  ['pointerdown','keydown','touchend'].forEach(function(ev){
+    var h=function(e){document.removeEventListener(ev,h,true);if(e&&e.target&&e.target.closest&&e.target.closest('#musicBtn'))return;autoMusic()};document.addEventListener(ev,h,true);
   });
   $('#timeBtn').addEventListener('click',function(){if(P.sleeping||P.act==='sleepwalk'){wake();return}setTime(app.dataset.time==='night'?'day':'night')});
   $('#whispBtn').addEventListener('click',function(){state.whispers=!state.whispers;$('#whispBtn').setAttribute('aria-pressed',state.whispers);if(!state.whispers)whisperEl.classList.remove('show');else showBubble(pick(MSG.idle));toast(state.whispers?'Whispers on':'Whispers off');saveSoon()});
