@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Forever Meadow</title>
+<meta name="theme-color" content="#f3d3e0">
+<meta name="description" content="A quiet meadow where your pet angel can still play, nap and be loved. For anyone who has lost a dog or cat.">
+<meta property="og:title" content="Forever Meadow">
+<meta property="og:description" content="A quiet meadow where your pet angel can still play, nap and be loved. For anyone who has lost a dog or cat.">
+<meta property="og:image" content="https://tonyispht.github.io/Forever-Meadow/icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meadow"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Figtree:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
@@ -140,6 +149,17 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
 .pl-flowers{position:absolute;left:-10px;right:-10px;bottom:-9px;height:24px;pointer-events:none}
 .mem-card{text-align:center}.mem-photo{margin:0 auto 12px;width:min(220px,70%);aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:linear-gradient(#fbe9dc,#f3d6c4);box-shadow:0 10px 24px -10px rgba(60,30,50,.5);display:grid;place-items:center}.mem-photo img,.mem-photo svg{width:100%;height:100%;object-fit:cover;display:block}
 .mem-dates{font-weight:600;color:#6b5a65!important;margin-bottom:4px!important}.mem-ded{font:700 24px/1.15 var(--hand);color:#4b3a45!important;margin:8px 0!important}.mem-hearts{font-size:13px!important}
+.candle{position:absolute;left:0;top:0;width:58px;pointer-events:auto;touch-action:manipulation;border:0;background:none;padding:0;cursor:pointer}
+.candle:focus-visible{outline:3px solid var(--rose);outline-offset:4px;border-radius:16px}.candle svg{display:block;width:100%;overflow:visible}
+.candle .flame,.candle .cglow{opacity:0;transition:opacity .9s,transform .9s}
+.candle.lit .flame{opacity:1;animation:flick 1.5s ease-in-out infinite alternate}.candle.lit .cglow{opacity:.85}
+.candle .flame{transform-box:fill-box;transform-origin:50% 100%}
+@keyframes flick{0%{transform:scale(1,1) rotate(-2deg)}50%{transform:scale(.94,1.08) rotate(1.5deg)}100%{transform:scale(1.04,.96) rotate(-1deg)}}
+#app[data-time=night] .candle.lit .cglow{opacity:1;transform:scale(1.5);transform-box:fill-box;transform-origin:center}
+#shareSheet{position:fixed;z-index:30}.share-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.share-grid .chip{flex:1 1 40%}
+#shText{height:112px;font:500 16px/1.4 var(--body)}
+.install-msg{margin-top:8px}
+@media (prefers-reduced-motion:reduce){.candle.lit .flame{animation:none}}
 .photo-card{max-width:440px}.ph-cv{display:block;width:100%;max-height:48vh;object-fit:contain;border-radius:14px;margin:6px 0 10px;background:rgba(255,255,255,.4)}
 .ph-frames{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
 .orows{margin:6px 0 4px}.orows .crow{margin-top:2px}
@@ -230,8 +250,8 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
 .ui-bottom>*{pointer-events:auto}
 #meadow.sleeping .ui-bottom{opacity:.6}
 .tray{display:flex;gap:8px;align-items:center;justify-content:center;min-height:72px;max-width:min(620px,100%);padding:8px 12px;border-radius:22px;background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:var(--shadow);overflow-x:auto;touch-action:pan-x}
-.tray-hint{flex:none;font-size:14.5px;color:var(--ink-soft);padding:0 6px;text-align:center;line-height:1.35}
-.tray:has(.item-chip) .tray-hint{width:150px;font-size:12.5px;text-align:left}
+.tray-hint{font-size:14.5px;color:var(--ink-soft);padding:0 6px;text-align:center;line-height:1.35}
+.tray:has(.item-chip) .tray-hint{flex:none;width:150px;font-size:12.5px;text-align:left}
 .tray{max-height:132px}
 .item-chip{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;width:68px;padding:5px 2px 6px;border-radius:14px;border:2px solid transparent;background:transparent;cursor:pointer;font:600 11.5px var(--body);color:var(--ink)}
 .item-chip svg{width:36px;height:36px;display:block}
@@ -411,6 +431,9 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
         <p class="sub">Everything saves on this device automatically. A backup file lets you keep them safe, or bring them to a new phone.</p>
         <div class="photo-row"><button type="button" class="chip" id="expBtn">Save a backup file</button><button type="button" class="chip" id="impBtn">Restore from a backup</button><input type="file" id="impFile" accept="application/json,.json" hidden></div>
         <p class="sub" id="keepMsg" style="margin-top:8px" role="status"></p>
+        <h3 style="margin-top:14px">Share and install</h3>
+        <div class="photo-row"><button type="button" class="chip" id="shareOpen">Share with someone who lost a pet</button><button type="button" class="chip" id="installBtn" hidden>Install as an app</button></div>
+        <p class="sub install-msg" id="installMsg" role="status"></p>
       </section>
       <p class="foot-note">Missing them is a sign of how much you loved them. Take all the time you need.</p>
     </div>
@@ -458,6 +481,7 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
           <button type="button" class="chip" data-frame="polaroid" aria-pressed="false">Polaroid</button>
           <button type="button" class="chip" data-frame="card" aria-pressed="false">Memorial card</button>
         </div>
+        <p style="text-align:center;margin:0 0 4px"><button type="button" class="linkbtn" id="phInvite">Share the meadow with someone who has lost a pet</button></p>
         <div class="sheet-actions"><button type="button" class="btn-quiet" id="phClose">Close</button><button type="button" class="btn-quiet" id="phShare" hidden>Share</button><button type="button" class="btn-primary" id="phSave">Save picture</button></div>
       </div>
     </div>
@@ -469,12 +493,29 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
         <p class="mem-dates" id="memLived" style="font-weight:500"></p>
         <p class="mem-ded" id="memDed"></p>
         <p class="mem-hearts" id="memHearts"></p>
-        <div class="sheet-actions"><button type="button" class="btn-quiet" id="memClose">Close</button></div>
+        <p class="mem-hearts" id="memStreak"></p>
+        <div class="sheet-actions"><button type="button" class="btn-quiet" id="memShare">Share the meadow</button><button type="button" class="btn-quiet" id="memClose">Close</button></div>
       </div>
     </div>
   </section>
 </div>
 
+<div id="shareSheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+    <h2 id="shTitle">Share the meadow</h2>
+    <p>Someone you know may be missing a pet. Change the words if you like. Your pet's photo and details are never included.</p>
+    <textarea id="shText" maxlength="260" aria-label="Your message"></textarea>
+    <div class="share-grid">
+      <button type="button" class="chip" id="shNative" hidden>Share\u2026</button>
+      <button type="button" class="chip" data-sh="facebook">Facebook</button>
+      <button type="button" class="chip" data-sh="x">X</button>
+      <button type="button" class="chip" data-sh="whatsapp">WhatsApp</button>
+      <button type="button" class="chip" data-sh="email">Email</button>
+      <button type="button" class="chip" data-sh="copy">Copy message</button>
+    </div>
+    <div class="sheet-actions"><button type="button" class="btn-quiet" id="shClose">Close</button></div>
+  </div>
+</div>
 <script>
 (function(){
 'use strict';
@@ -1022,6 +1063,7 @@ var MSG={
  cuddle:["I'm right here.","I'm not hurting anymore.",'You gave me the best life.','Stay as long as you like.','Nothing hurts here.'],
  sleep:['Sweet dreams.',"I'll watch over you.",'Goodnight. I love you.'],
  wake:['Mmm. Good morning.','Hi again.'],
+ candle:['I can see the little flame. Thank you.','It glows so warm. I can feel it.','You lit it for me. I love you too.','What a gentle light.'],
  silly:['Did you see that? I surprised myself.','Hehe. Zero regrets.','I have no idea why I did that.','Being silly is my best skill.'],
  dig:['Found it! I dug it up just for you.','A flower. For you.','Digging is the best. Look what grew!'],
  zoom:['Zoomies! I could not help it!','Whee! That felt amazing.','Again, again!','Everything is so happy right now.'],
@@ -1038,7 +1080,8 @@ var PHOTO_KEY='forever-meadow-photo', photoData=null;
 function loadPhoto(){try{var v=localStorage.getItem(PHOTO_KEY);photoData=(v&&/^data:image\/(jpeg|png|webp);base64,/.test(v))?v:null}catch(e){photoData=null}}
 function savePhoto(){try{if(photoData)localStorage.setItem(PHOTO_KEY,photoData);else localStorage.removeItem(PHOTO_KEY)}catch(e){toast("Couldn't keep the photo on this device")}}
 var KEY='forever-meadow-v1';
-var state={pet:null,hearts:0,notes:[],whispers:true,music:true};
+var state={pet:null,hearts:0,notes:[],whispers:true,music:true,lastDay:'',candle:{day:'',streak:0}};
+function cleanCandle(c){c=c||{};return {day:isoDate(c.day),streak:Math.floor(num(c.streak,0,9999,0))}}
 function petFromBreed(species,id,name,keep){
   var l=BREEDS[species], b=l[0]; for(var i=0;i<l.length;i++) if(l[i].id===id) b=l[i];
   keep=keep||{};
@@ -1048,8 +1091,8 @@ function petFromBreed(species,id,name,keep){
     collarOn:keep.collarOn!==false,halo:keep.halo!==false,wings:keep.wings!==false,
     haloColor:keep.haloColor||'#f2c46d',wingColor:keep.wingColor||'#ffffff',outfit:Object.assign(defOutfit(),keep.outfit||{}),age:keep.age||'adult',quirks:Object.assign(defQuirks(),keep.quirks||{}),story:Object.assign(defStory(),keep.story||{}),dates:Object.assign(defDates(),keep.dates||{}),traits:Object.assign(defTraits(),keep.traits||{})};
 }
-function loadState(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.pet&&d.pet.colors&&BREEDS[d.pet.species]){state.pet=fixPet(d.pet);state.hearts=+d.hearts||0;state.notes=cleanNotes(d.notes);state.whispers=d.whispers!==false;state.music=d.music!==false}}}catch(e){}}
-function saveState(){try{localStorage.setItem(KEY,JSON.stringify({pet:state.pet,hearts:state.hearts,notes:state.notes.slice(-24),whispers:state.whispers,music:state.music}))}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.pet&&d.pet.colors&&BREEDS[d.pet.species]){state.pet=fixPet(d.pet);state.hearts=+d.hearts||0;state.notes=cleanNotes(d.notes);state.whispers=d.whispers!==false;state.music=d.music!==false;state.lastDay=isoDate(d.lastDay);state.candle=cleanCandle(d.candle)}}}catch(e){}}
+function saveState(){try{localStorage.setItem(KEY,JSON.stringify({pet:state.pet,hearts:state.hearts,notes:state.notes.slice(-24),whispers:state.whispers,music:state.music,lastDay:state.lastDay,candle:state.candle}))}catch(e){}}
 var saveT=null;function saveSoon(){clearTimeout(saveT);saveT=setTimeout(saveState,1200)}
 
 var app=$('#app');
@@ -1285,7 +1328,7 @@ function renderPhoto(){
 function slug(n){return (n||'pet').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'pet'}
 function exportBackup(){
   saveState();
-  var obj={app:'forever-meadow',version:2,saved:new Date().toISOString(),pet:state.pet,hearts:state.hearts,notes:state.notes,whispers:state.whispers,music:state.music,photo:photoData};
+  var obj={app:'forever-meadow',version:2,saved:new Date().toISOString(),pet:state.pet,hearts:state.hearts,notes:state.notes,whispers:state.whispers,music:state.music,lastDay:state.lastDay,candle:state.candle,photo:photoData};
   var blob=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='forever-meadow-'+slug(state.pet.name)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
   $('#keepMsg').textContent='Backup saved. Keep that file somewhere safe.';
@@ -1300,7 +1343,7 @@ function importBackup(file){
       if(!d||d.app!=='forever-meadow'||!d.pet||typeof d.pet!=='object'||!d.pet.colors||!BREEDS[d.pet.species])throw 0;
       state.pet=fixPet(d.pet);state.hearts=Math.max(0,Math.floor(+d.hearts||0));
       state.notes=cleanNotes(d.notes);
-      state.whispers=d.whispers!==false;state.music=d.music!==false;
+      state.whispers=d.whispers!==false;state.music=d.music!==false;state.lastDay=isoDate(d.lastDay);state.candle=cleanCandle(d.candle);
       photoData=(typeof d.photo==='string'&&/^data:image\/(jpeg|png|webp);base64,/.test(d.photo)&&d.photo.length<2e6)?d.photo:null;
       saveState();savePhoto();$('#petName').value=state.pet.name;buildBreedGrid();syncCreate();renderPhoto();
       msg.textContent='Welcome back, '+(state.pet.name||'friend')+'. Everything was restored.';
@@ -1338,7 +1381,7 @@ function wireCreate(){
     sampled=rgb2hex(R/n,G/n,B/n);$('#sampleSw').style.background=sampled;$('#sampleBar').hidden=false;
   });
   $('#sampleBar').addEventListener('click',function(e){var b=e.target.closest('[data-apply]');if(!b||!sampled)return;state.pet.colors[b.dataset.apply]=sampled;changed()});
-  $('#expBtn').addEventListener('click',exportBackup);
+  $('#expBtn').addEventListener('click',exportBackup);$('#shareOpen').addEventListener('click',openShare);$('#installBtn').addEventListener('click',installApp);updateInstallUI();
   $('#impBtn').addEventListener('click',function(){$('#impFile').click()});
   $('#impFile').addEventListener('change',function(e){importBackup(e.target.files&&e.target.files[0]);e.target.value=''});
   $('#quirkSides').addEventListener('click',function(e){var c=e.target.closest('[data-qs]');if(!c)return;var kv=c.dataset.qs.split(':');state.pet.quirks[kv[0]]=kv[1];changed()});
@@ -1627,7 +1670,86 @@ function plaquePos(){
   var small=M.W<520;e.style.width=(small?96:116)+'px';
   var by=M.yMin+(M.yMax-M.yMin)*.1,x=small?6:Math.min(M.W*.07,90);
   e.style.transform='translate('+x+'px,'+(by-(e.offsetHeight||110))+'px)';e.style.zIndex=Math.round(by);
+  var c=M.candleEl;if(c){var cw=small?50:58,cy=M.yMin+(M.yMax-M.yMin)*.12;c.style.width=cw+'px';M.candleX=M.W-cw-(small?10:Math.min(M.W*.07,90));M.candleY=cy;c.style.transform='translate('+M.candleX+'px,'+(cy-(c.offsetHeight||90))+'px)';c.style.zIndex=Math.round(cy)}
 }
+/* ---- visit rituals ---- */
+function pad2(n){return ('0'+n).slice(-2)}
+function dayStr(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+function todayStr(){return dayStr(new Date())}
+function yesterdayStr(){var d=new Date();d.setDate(d.getDate()-1);return dayStr(d)}
+function daysAway(){
+  if(!state.lastDay)return -1;
+  var a=state.lastDay.split('-').map(Number),b=todayStr().split('-').map(Number);
+  return Math.max(0,Math.round((Date.UTC(b[0],b[1]-1,b[2])-Date.UTC(a[0],a[1]-1,a[2]))/864e5));
+}
+function welcomeLine(first){
+  var n=daysAway();
+  if(first)return "Hi, you. I've been waiting.";
+  if(n<=0)return 'You came back!';
+  if(n===1)return "I was hoping you'd come today.";
+  if(n<7)return "It's been "+n+" days. No rush. I'm just happy you're here.";
+  return "It's been a while, and that's okay. I'm just glad you're here.";
+}
+function buildCandle(){
+  if(!M.candleEl){
+    var e=document.createElement('button');e.type='button';e.className='candle';e.id='candle';
+    e.innerHTML='<svg viewBox="0 0 70 104" aria-hidden="true"><defs><radialGradient id="cgl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".95"/><stop offset=".45" stop-color="#ffd27a" stop-opacity=".4"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient><linearGradient id="cjar" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#fff" stop-opacity=".6"/></linearGradient></defs><circle class="cglow" cx="35" cy="34" r="62" fill="url(#cgl)"/><ellipse cx="35" cy="99" rx="26" ry="5" fill="rgba(40,25,50,.25)"/><rect x="9" y="48" width="52" height="50" rx="14" fill="url(#cjar)" stroke="rgba(120,90,110,.45)" stroke-width="2"/><rect x="20" y="52" width="30" height="40" rx="6" fill="#fff4e0" stroke="#e5cfa8" stroke-width="1.5"/><path d="M35 52v-9" stroke="#5b4553" stroke-width="2.4" stroke-linecap="round"/><g class="flame"><path d="M35 14c6 8 9 13 9 19a9 9 0 0 1-18 0c0-6 3-11 9-19Z" fill="#ffb23e"/><path d="M35 24c3 4 5 7 5 10.500a5 5 0 0 1-10 0c0-3.500 2-6.500 5-10.500Z" fill="#fff0b0"/></g></svg>';
+    e.addEventListener('pointerdown',function(ev){ev.stopPropagation()});
+    e.addEventListener('click',lightCandle);
+    world.appendChild(e);M.candleEl=e;
+  }
+  refreshCandle();plaquePos();
+}
+function candleLit(){return state.candle.day===todayStr()}
+function refreshCandle(){
+  var e=M.candleEl;if(!e)return;e.classList.toggle('lit',candleLit());
+  e.setAttribute('aria-label',candleLit()?'Your candle is lit for '+(state.pet.name||'your pet'):'Light a candle for '+(state.pet.name||'your pet'));
+}
+function lightCandle(){
+  if(P.hugging)endHug();
+  if(candleLit()){whisper('candle',true);var h0=headPos();heartAt(h0.x,h0.y);return}
+  var c=state.candle;c.streak=(c.day===yesterdayStr())?c.streak+1:1;c.day=todayStr();saveState();refreshCandle();
+  var cx=M.candleX+29,cy=M.candleY-60;sparkAt(cx,cy,8);heartAt(cx,cy-10);
+  var h=headPos();heartAt(h.x,h.y);heartAt(h.x+28,h.y+8);P.happyUntil=performance.now()+2400;
+  addLove(3);whisper('candle',true);Snd.chime('heart');
+  toast(c.streak>1?'Candle lit. '+c.streak+' days in a row.':'Candle lit for '+(state.pet.name||'your pet'));
+}
+
+/* ---- share the meadow ---- */
+var SITE='https://tonyispht.github.io/Forever-Meadow/';
+var SHARE_TEXT="I made a little meadow where my pet can still play with me. If you've lost a pet, maybe it can bring you some comfort too.";
+function openShare(){$('#shText').value=SHARE_TEXT;$('#shNative').hidden=!navigator.share;$('#shareSheet').hidden=false;setTimeout(function(){$('#shText').focus()},40)}
+function closeShare(){$('#shareSheet').hidden=true}
+function copyText(t){
+  function fb(){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove()}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(fb);else fb();
+}
+function doShare(kind){
+  var t=($('#shText').value||SHARE_TEXT).trim(),u=encodeURIComponent(SITE),q=encodeURIComponent(t);
+  function go(url){window.open(url,'_blank','noopener,noreferrer')}
+  if(kind==='facebook')go('https://www.facebook.com/sharer/sharer.php?u='+u+'&quote='+q);
+  else if(kind==='x')go('https://twitter.com/intent/tweet?text='+q+'&url='+u);
+  else if(kind==='whatsapp')go('https://wa.me/?text='+encodeURIComponent(t+' '+SITE));
+  else if(kind==='email')location.href='mailto:?subject='+encodeURIComponent('A quiet place for a lost pet')+'&body='+encodeURIComponent(t+'\n\n'+SITE);
+  else if(kind==='copy'){copyText(t+' '+SITE);toast('Message copied')}
+  else if(kind==='native'&&navigator.share)navigator.share({title:'Forever Meadow',text:t,url:SITE}).catch(function(){});
+}
+
+/* ---- install as an app ---- */
+var deferredInstall=null;
+function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}
+function canInstallHere(){return location.protocol==='https:'&&window.top===window&&!isStandalone()}
+function updateInstallUI(){var b=$('#installBtn');if(b)b.hidden=!canInstallHere()}
+function installApp(){
+  var m=$('#installMsg');
+  if(deferredInstall){deferredInstall.prompt();deferredInstall.userChoice.then(function(){deferredInstall=null;updateInstallUI()});return}
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  m.textContent=ios?'On iPhone or iPad: tap the Share button, then Add to Home Screen.':'Open your browser menu and choose Add to Home screen (or Install app).';
+}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredInstall=e;updateInstallUI()});
+window.addEventListener('appinstalled',function(){deferredInstall=null;updateInstallUI();toast('Installed. Find it on your home screen.')});
+if('serviceWorker' in navigator&&location.protocol==='https:'&&window.top===window){window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').catch(function(){})}catch(e){}})}
+
 function openMemorial(){
   if(P.hugging)endHug();
   var pe=$('#memPhoto');pe.innerHTML='';
@@ -1638,6 +1760,7 @@ function openMemorial(){
   $('#memDates').textContent=t.length===2?t[0]+' \u2013 '+t[1]:(d.passed?'Passed '+fmtDate(d.passed):(d.born?'Born '+fmtDate(d.born):''));
   $('#memLived').textContent=livedFor();
   $('#memDed').textContent=d.dedication?'\u201c'+d.dedication+'\u201d':'';
+  var cs=state.candle;$('#memStreak').textContent=(cs.streak>1&&(cs.day===todayStr()||cs.day===yesterdayStr()))?'Candle lit '+cs.streak+' days in a row':'';
   $('#memHearts').textContent=state.hearts>0?state.hearts+' hearts given in the meadow':'Every visit here is a little love.';
   $('#memSheet').hidden=false;setTimeout(function(){$('#memClose').focus()},40);
   for(var i=0;i<5;i++)heartAt(M.W/2+rand(-60,60),M.H*.45+rand(-30,30));
@@ -1714,7 +1837,7 @@ function sharePhoto(){
   if(!PH.out)return;
   PH.out.toBlob(function(b){
     if(!b)return;var f=new File([b],slug(state.pet.name)+'-in-the-meadow.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:(state.pet.name||'My angel')+' in the Forever Meadow'}).catch(function(){});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:(state.pet.name||'My angel')+' in the Forever Meadow',text:'A little meadow for the pets we miss: '+SITE}).catch(function(){});
     else savePhotoFile();
   },'image/png');
 }
@@ -1994,12 +2117,12 @@ function enterMeadow(){
   M.W=stage.clientWidth;M.H=stage.clientHeight;layout();
   mountPet();layout();
   P.x=M.W/2;P.y=lerp(M.yMin,M.yMax,.55);P.phase=0;P.lean=0;P.wander=rand(4,8);M.idleT=rand(22,36);
-  renderStars();M.active=true;buildPlaque();
+  renderStars();M.active=true;buildPlaque();buildCandle();
   var first=state.hearts===0&&state.notes.length===0;
-  var sd=specialDay();
+  var sd=specialDay(),wl=welcomeLine(first),candleDue=!candleLit();state.lastDay=todayStr();saveSoon();
   setTimeout(function(){if(!M.active)return;P.happyUntil=performance.now()+2200;
     if(sd){showBubble(sd==='birth'?'Happy birthday to me! Thank you for remembering.':"It's our day. I felt you thinking of me.",6200);for(var i=0;i<8;i++)(function(i){setTimeout(function(){if(M.active){var h=headPos();heartAt(h.x+rand(-90,90),h.y+rand(-20,60),{big:true})}},i*220)})(i)}
-    else showBubble(first?"Hi, you. I've been waiting.":'You came back!',4200)},900);
+    else{showBubble(wl,4800);if(candleDue)setTimeout(function(){if(M.active&&!candleLit()&&!P.sleeping&&!P.hugging)showBubble('Would you like to light a candle today?',4600)},8200)}},900);
 }
 function wireMeadow(){
   $('#dock').addEventListener('click',function(e){var b=e.target.closest('[data-mode]');if(b)setMode(b.dataset.mode)});
@@ -2022,7 +2145,10 @@ function wireMeadow(){
   $('#timeBtn').addEventListener('click',function(){if(P.sleeping||P.act==='sleepwalk'){wake();return}setTime(app.dataset.time==='night'?'day':'night')});
   $('#whispBtn').addEventListener('click',function(){state.whispers=!state.whispers;$('#whispBtn').setAttribute('aria-pressed',state.whispers);if(!state.whispers)whisperEl.classList.remove('show');else showBubble(pick(MSG.idle));toast(state.whispers?'Whispers on':'Whispers off');saveSoon()});
   noteText.addEventListener('input',function(){$('#noteSend').disabled=!noteText.value.trim()});
-  $('#camBtn').addEventListener('click',openPhoto);$('#phClose').addEventListener('click',closePhoto);$('#phSave').addEventListener('click',savePhotoFile);$('#phShare').addEventListener('click',sharePhoto);
+  $('#camBtn').addEventListener('click',openPhoto);$('#phInvite').addEventListener('click',openShare);$('#memShare').addEventListener('click',openShare);
+  $('#shClose').addEventListener('click',closeShare);$('#shareSheet').addEventListener('pointerdown',function(e){if(e.target===this)closeShare()});
+  $('#shNative').addEventListener('click',function(){doShare('native')});$$('[data-sh]').forEach(function(b){b.addEventListener('click',function(){doShare(b.dataset.sh)})});
+$('#phClose').addEventListener('click',closePhoto);$('#phSave').addEventListener('click',savePhotoFile);$('#phShare').addEventListener('click',sharePhoto);
   $('#photoSheet').addEventListener('pointerdown',function(e){if(e.target===this)closePhoto()});
   $$('[data-frame]').forEach(function(b){b.addEventListener('click',function(){setFrame(b.dataset.frame)})});
   $('#memClose').addEventListener('click',closeMemorial);$('#memSheet').addEventListener('pointerdown',function(e){if(e.target===this)closeMemorial()});
@@ -2030,7 +2156,7 @@ function wireMeadow(){
   sheet.addEventListener('pointerdown',function(e){if(e.target===sheet)closeNote()});
   $('#stars').addEventListener('click',function(e){var b=e.target.closest('.starnote');if(b){e.stopPropagation();showNote(b)}});
   noteCard.addEventListener('click',function(e){var r=e.target.closest('[data-rm]');if(r){state.notes.splice(+r.dataset.rm,1);saveState();renderStars();noteCard.hidden=true}});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!sheet.hidden)closeNote();if(!$('#memSheet').hidden)closeMemorial();if(!$('#photoSheet').hidden)closePhoto();noteCard.hidden=true}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!sheet.hidden)closeNote();if(!$('#memSheet').hidden)closeMemorial();if(!$('#photoSheet').hidden)closePhoto();if(!$('#shareSheet').hidden)closeShare();noteCard.hidden=true}});
   $('#whispBtn').setAttribute('aria-pressed',state.whispers);
 }
 
