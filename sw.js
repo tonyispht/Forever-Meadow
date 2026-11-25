@@ -1,4 +1,4 @@
-const CACHE = 'forever-meadow-v5';
+const CACHE = 'forever-meadow-v6';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -10,6 +10,8 @@ self.addEventListener('fetch', e => {
   const r = e.request;
   if (r.method !== 'GET') return;
   if (r.mode === 'navigate') {
+    const u = new URL(r.url);
+    if (!(u.pathname.endsWith('/') || u.pathname.endsWith('/index.html'))) return;
     // newest page when online, saved copy when offline
     e.respondWith(fetch(r).then(res => { const cp = res.clone(); caches.open(CACHE).then(c => c.put('./index.html', cp)); return res; })
       .catch(() => caches.match('./index.html')));

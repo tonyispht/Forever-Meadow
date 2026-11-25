@@ -439,6 +439,9 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
         <h3 style="margin-top:14px">Share and install</h3>
         <div class="photo-row"><button type="button" class="chip" id="shareOpen">Share with someone who lost a pet</button><button type="button" class="chip" id="installBtn" hidden>Install as an app</button></div>
         <p class="sub install-msg" id="installMsg" role="status"></p>
+        <h3 style="margin-top:14px">Privacy</h3>
+        <p class="sub" style="margin-bottom:6px">The creator can see anonymous totals only, like how many pets have been made and how many people are in the meadow. Never names, photos, notes or dates.</p>
+        <label class="sf" style="display:flex;gap:10px;align-items:center;margin:6px 0 0"><input type="checkbox" id="noTrack" style="width:20px;height:20px;accent-color:#e8728f"><span style="margin:0">Don't count my visits</span></label>
       </section>
       <p class="foot-note">Missing them is a sign of how much you loved them. Take all the time you need.</p>
     </div>
@@ -1129,6 +1132,22 @@ function treatReact(id){
   if(id==='catnip')setTimeout(function(){if(M.active&&!P.sleeping&&!P.hugging)startZoom()},1200);
   if(id==='pupcup'){var hq=headPos();sparkAt(hq.x,hq.y+30,6)}
 }
+/* anonymous counts only (how many pets, how many online). Never names, photos, notes or dates. */
+var Track=(function(){
+  var URL='https://forever-meadow-stats.tonyispht.workers.dev/e';
+  function vid(){try{var v=localStorage.getItem('fm-vid');if(!v){v=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(String(Math.random()).slice(2)+Date.now().toString(36)+'abcd');localStorage.setItem('fm-vid',v)}return v}catch(e){return null}}
+  function enabled(){try{return location.hostname==='tonyispht.github.io'&&navigator.doNotTrack!=='1'&&localStorage.getItem('fm-notrack')!=='1'}catch(e){return false}}
+  function send(o){
+    if(!enabled())return;var v=vid();if(!v)return;o.v=v;
+    try{var body=JSON.stringify(o);if(navigator.sendBeacon&&navigator.sendBeacon(URL,new Blob([body],{type:'text/plain'})))return;fetch(URL,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}}).catch(function(){})}catch(e){}
+  }
+  return {
+    hello:function(){send({t:'hello'})},
+    created:function(sp,br){send({t:'create',species:sp,breed:br})},
+    ping:function(){send({t:'ping'})},
+    act:function(k){send({t:'act',k:k})}
+  };
+})();
 var PHOTO_KEY='forever-meadow-photo', photoData=null;
 function loadPhoto(){try{var v=localStorage.getItem(PHOTO_KEY);photoData=(v&&/^data:image\/(jpeg|png|webp);base64,/.test(v))?v:null}catch(e){photoData=null}}
 function savePhoto(){try{if(photoData)localStorage.setItem(PHOTO_KEY,photoData);else localStorage.removeItem(PHOTO_KEY)}catch(e){toast("Couldn't keep the photo on this device")}}
@@ -1390,7 +1409,7 @@ function renderPhoto(){
 }
 function slug(n){return (n||'pet').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'pet'}
 function exportBackup(){
-  saveState();
+  saveState();Track.act('export');
   var obj={app:'forever-meadow',version:2,saved:new Date().toISOString(),pet:state.pet,hearts:state.hearts,notes:state.notes,whispers:state.whispers,music:state.music,lastDay:state.lastDay,candle:state.candle,photo:photoData};
   var blob=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='forever-meadow-'+slug(state.pet.name)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
@@ -1444,6 +1463,7 @@ function wireCreate(){
     sampled=rgb2hex(R/n,G/n,B/n);$('#sampleSw').style.background=sampled;$('#sampleBar').hidden=false;
   });
   $('#sampleBar').addEventListener('click',function(e){var b=e.target.closest('[data-apply]');if(!b||!sampled)return;state.pet.colors[b.dataset.apply]=sampled;changed()});
+  var nt=$('#noTrack');try{nt.checked=localStorage.getItem('fm-notrack')==='1'}catch(e){}nt.addEventListener('change',function(){try{if(nt.checked)localStorage.setItem('fm-notrack','1');else localStorage.removeItem('fm-notrack')}catch(e){}toast(nt.checked?'Your visits will not be counted':'Thanks for helping count')});
   $('#expBtn').addEventListener('click',exportBackup);$('#shareOpen').addEventListener('click',openShare);$('#installBtn').addEventListener('click',installApp);updateInstallUI();
   $('#impBtn').addEventListener('click',function(){$('#impFile').click()});
   $('#impFile').addEventListener('change',function(e){importBackup(e.target.files&&e.target.files[0]);e.target.value=''});
@@ -1564,6 +1584,7 @@ function startHug(){if(P.hugging)return;P.hugging=true;M.hugT=0;M.hugSaid=false;
 function endHug(){P.hugging=false;P.happyUntil=performance.now()+1600}
 
 function dropTreat(id,x,y){
+  Track.act('treat:'+id);
   var def=TREATS[state.pet.species].filter(function(t){return t.id===id})[0];if(!def)return;
   var gy=clamp(y,M.yMin+8,M.yMax),gx=clamp(x,40,M.W-40);
   var el=document.createElement('div');el.className='item';el.innerHTML='<div class="fall">'+def.svg+'</div>';
@@ -1632,6 +1653,7 @@ function refreshDock(){
   meadow.classList.toggle('sleeping',P.sleeping);
 }
 function setMode(id){
+  Track.act('mode:'+id);
   if(id==='note'){openNote();return}
   if(id==='rest'){if(P.sleeping||P.act==='sleepwalk')wake();else startSleep();return}
   if(P.sleeping||P.act==='sleepwalk')wake();
@@ -1656,7 +1678,7 @@ function wireTray(){
     var tr=e.target.closest('[data-treat]'),ty=e.target.closest('[data-toy]');
     var lv=e.target.closest('[data-love]');if(lv){doLove(lv.dataset.love);return}
     if(tr){M.treat=tr.dataset.treat;var side=Math.random()<.5?-1:1;dropTreat(M.treat,P.x+side*rand(80,160),P.y+rand(-10,14));renderTray()}
-    if(ty){M.toy=ty.dataset.toy;renderTray();var h=headPos();
+    if(ty){M.toy=ty.dataset.toy;Track.act('toy:'+M.toy);renderTray();var h=headPos();
       if(BALLSKINS[M.toy])throwBall(clamp(P.x+rand(-200,200),40,M.W-40),P.y+rand(-10,16));
       else if(M.toy==='bubbles')spawnBubbles(P.x+rand(-60,60),h.y,4);
       else if(M.toy==='swim'){P.act=null;P.tx=null;whisper('swim',true)}
@@ -1776,7 +1798,7 @@ function lightCandle(){
   var c=state.candle;c.streak=(c.day===yesterdayStr())?c.streak+1:1;c.day=todayStr();saveState();refreshCandle();
   var cx=M.candleX+29,cy=M.candleY-60;sparkAt(cx,cy,8);heartAt(cx,cy-10);
   var h=headPos();heartAt(h.x,h.y);heartAt(h.x+28,h.y+8);P.happyUntil=performance.now()+2400;
-  addLove(3);whisper('candle',true);Snd.chime('heart');
+  Track.act('candle');addLove(3);whisper('candle',true);Snd.chime('heart');
   toast(c.streak>1?'Candle lit. '+c.streak+' days in a row.':'Candle lit for '+(state.pet.name||'your pet'));
 }
 
@@ -1790,6 +1812,7 @@ function copyText(t){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(fb);else fb();
 }
 function doShare(kind){
+  Track.act('share:'+kind);
   var t=($('#shText').value||SHARE_TEXT).trim(),u=encodeURIComponent(SITE),q=encodeURIComponent(t);
   function go(url){window.open(url,'_blank','noopener,noreferrer')}
   if(kind==='facebook')go('https://www.facebook.com/sharer/sharer.php?u='+u+'&quote='+q);
@@ -1812,11 +1835,11 @@ function installApp(){
   m.textContent=ios?'On iPhone or iPad: tap the Share button, then Add to Home Screen.':'Open your browser menu and choose Add to Home screen (or Install app).';
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredInstall=e;updateInstallUI()});
-window.addEventListener('appinstalled',function(){deferredInstall=null;updateInstallUI();toast('Installed. Find it on your home screen.')});
+window.addEventListener('appinstalled',function(){Track.act('install');deferredInstall=null;updateInstallUI();toast('Installed. Find it on your home screen.')});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&window.top===window){window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').catch(function(){})}catch(e){}})}
 
 function openMemorial(){
-  if(P.hugging)endHug();
+  Track.act('memorial');if(P.hugging)endHug();
   var pe=$('#memPhoto');pe.innerHTML='';
   if(photoData){var im=new Image();im.alt='Photo of '+(state.pet.name||'your pet');im.src=photoData;pe.appendChild(im)}
   else{pe.innerHTML=buildPet(state.pet,'mm',{glow:.55});var sv=pe.querySelector('svg');sv.classList.add('static','is-happy');sv.style.cssText='width:92%;height:92%;margin-top:6%'}
@@ -1895,11 +1918,11 @@ function drawPhoto(frame){
   if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load('700 40px Caveat'),document.fonts.load('40px "Young Serif"'),document.fonts.load('600 30px Figtree')]).then(go,go)}else go();
 }
 function savePhotoFile(){
-  if(!PH.out)return;
+  if(!PH.out)return;Track.act('photo:save');
   PH.out.toBlob(function(b){if(!b){toast("Couldn't save the picture");return}var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=slug(state.pet.name)+'-in-the-meadow.png';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},2000);toast('Picture saved')},'image/png');
 }
 function sharePhoto(){
-  if(!PH.out)return;
+  if(!PH.out)return;Track.act('photo:share');
   PH.out.toBlob(function(b){
     if(!b)return;var f=new File([b],slug(state.pet.name)+'-in-the-meadow.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:(state.pet.name||'My angel')+' in the Forever Meadow',text:'A little meadow for the pets we miss: '+SITE}).catch(function(){});
@@ -1956,6 +1979,7 @@ function updateBfly(dt,now){
 
 function noteAt(x,y){var e=burstEl('mnote',x,y,rand(-30,30),rand(-120,-80));e.textContent=pick(['\u266a','\u266b']);e.style.color=pick(['#e8728f','#9b78d0','#f2b24a','#5fa8dc'])}
 function doLove(id){
+  Track.act('love:'+id);
   if(P.sleeping||P.act==='sleepwalk')wake();endHug();
   var now=performance.now(),h=headPos(),vh=visH();P.tx=null;P.onArrive=null;if(P.act!=='love')P.act=null;
   if(id==='boop'){jump(300);P.squash=1;P.happyUntil=now+1500;sparkAt(h.x,h.y+vh*.2,6);heartAt(h.x,h.y-20);Snd.chime('boop');addLove(1);whisper('boop',true)}
@@ -2248,7 +2272,7 @@ function enterMeadow(){
   M.W=stage.clientWidth;M.H=stage.clientHeight;layout();
   mountPet();layout();
   P.x=M.W/2;P.y=lerp(M.yMin,M.yMax,.55);P.phase=0;P.lean=0;P.wander=rand(4,8);M.idleT=rand(22,36);
-  renderStars();M.active=true;buildPlaque();buildCandle();
+  renderStars();M.active=true;buildPlaque();buildCandle();Track.created(state.pet.species,state.pet.breed);
   var first=state.hearts===0&&state.notes.length===0;
   var sd=specialDay(),wl=welcomeLine(first),candleDue=!candleLit();state.lastDay=todayStr();saveSoon();
   var side=Math.random()<.5?-1:1;P.x=side<0?26:M.W-26;P.y=lerp(M.yMin,M.yMax,.6);P.face=-side;
@@ -2292,7 +2316,7 @@ $('#phClose').addEventListener('click',closePhoto);$('#phSave').addEventListener
 
 /* ---- boot ---- */
 function start(data){
-  loadState();loadPhoto();
+  loadState();loadPhoto();Track.hello();setInterval(function(){if(M.active&&!document.hidden)Track.ping()},30000);
   if(data&&data.pet&&BREEDS[data.pet.species]){state.pet=fixPet(data.pet);state.hearts=data.hearts||0;state.notes=data.notes||[];if(data.whispers!=null)state.whispers=data.whispers}
   var returning=!!(state.pet&&state.pet.name);
   if(!state.pet)state.pet=petFromBreed('dog','lab','');

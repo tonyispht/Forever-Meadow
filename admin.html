@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Forever Meadow · Admin</title>
+<style>
+:root{--ink:#4b3a45;--soft:#7d6a75;--rose:#e8728f;--card:#fff9f3;--line:rgba(110,80,100,.14)}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:linear-gradient(#fde8dc,#f3d3e0) fixed;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:18px 14px 60px}
+h1{font-size:22px;margin:0}h2{font-size:15px;margin:0 0 10px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sub{color:var(--soft);font-size:13px}
+button{font:600 13px system-ui;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;color:var(--ink);cursor:pointer}
+button.primary{background:var(--rose);border-color:var(--rose);color:#fff}
+.card{background:var(--card);border-radius:20px;padding:16px;box-shadow:0 10px 24px -14px rgba(60,30,50,.5);margin-bottom:14px}
+.hero{display:flex;align-items:center;gap:16px}
+.live{width:14px;height:14px;border-radius:50%;background:#4bbf7a;box-shadow:0 0 0 0 rgba(75,191,122,.6);animation:p 1.8s infinite}
+.live.off{background:#bbb;animation:none}
+@keyframes p{70%{box-shadow:0 0 0 14px rgba(75,191,122,0)}100%{box-shadow:0 0 0 0 rgba(75,191,122,0)}}
+.big{font:700 54px/1 system-ui}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:0 8px 20px -14px rgba(60,30,50,.5)}
+.stat b{display:block;font-size:28px;line-height:1.1}.stat span{color:var(--soft);font-size:12.5px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13.5px}
+.row .k{flex:0 0 108px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .bar{flex:1;height:10px;background:rgba(110,80,100,.1);border-radius:6px;overflow:hidden}
+.row .bar i{display:block;height:100%;background:var(--rose);border-radius:6px}
+.row .n{flex:0 0 40px;text-align:right;color:var(--soft)}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--soft);margin-top:6px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+#login{max-width:380px;margin:12vh auto 0}
+input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);font:15px system-ui;margin:10px 0}
+.err{color:#b3354f;font-size:13px;min-height:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="login" class="card" hidden>
+    <h1>Forever Meadow</h1>
+    <p class="sub">Private stats. Enter your admin key.</p>
+    <input id="tok" type="password" placeholder="Admin key" autocomplete="current-password">
+    <button class="primary" id="go">View stats</button>
+    <p class="err" id="lerr"></p>
+  </div>
+  <div id="dash" hidden>
+    <header>
+      <div><h1>Forever Meadow · Admin</h1><div class="sub" id="upd">Loading…</div></div>
+      <div><button id="refresh">Refresh</button> <button id="out">Sign out</button></div>
+    </header>
+    <div class="card hero"><span class="live" id="live"></span><div><div class="big" id="online">0</div><div class="sub">in the meadow right now</div></div></div>
+    <div class="grid" id="grid"></div>
+    <div class="card"><h2>Last 30 days (UTC)</h2><div id="chart"></div><div class="legend"><span><i style="background:#e8728f"></i>Pets created</span><span><i style="background:#9b78d0"></i>New visitors</span><span><i style="background:#f2b24a"></i>Visits</span></div></div>
+    <div class="cols">
+      <div class="card"><h2>Dogs and cats</h2><div id="species"></div><h2 style="margin-top:14px">Top breeds</h2><div id="breeds"></div></div>
+      <div class="card"><h2>Treats given</h2><div id="treats"></div></div>
+      <div class="card"><h2>Toys played with</h2><div id="toys"></div></div>
+      <div class="card"><h2>Love actions</h2><div id="loves"></div><h2 style="margin-top:14px">Tabs opened</h2><div id="modes"></div></div>
+      <div class="card"><h2>Sharing and keepsakes</h2><div id="other"></div></div>
+      <div class="card"><h2>Where from</h2><div id="countries"></div><h2 style="margin-top:14px">Active, last 24 hours</h2><div id="hours"></div></div>
+    </div>
+    <p class="sub">Counts are anonymous. Visitors who opt out, or have Do Not Track on, are not counted. A visitor means one browser, not one person.</p>
+  </div>
+</div>
+<script>
+(function(){
+var API='https://forever-meadow-stats.tonyispht.workers.dev/stats',KEY='fm-admin',timer=null;
+var $=function(s){return document.querySelector(s)};
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function fmt(n){return (n||0).toLocaleString()}
+function pretty(k){return k.replace(/[-_]/g,' ').replace(/^\w/,function(c){return c.toUpperCase()})}
+function bars(box,items,fmtK){
+  box.textContent='';if(!items.length){box.appendChild(el('div','sub','Nothing yet'));return}
+  var mx=Math.max.apply(null,items.map(function(i){return i.n}))||1;
+  items.forEach(function(i){var r=el('div','row'),k=el('span','k',fmtK?fmtK(i.k):pretty(i.k)),b=el('span','bar'),f=el('i');f.style.width=Math.max(3,i.n/mx*100)+'%';b.appendChild(f);r.appendChild(k);r.appendChild(b);r.appendChild(el('span','n',fmt(i.n)));box.appendChild(r)});
+}
+function pick(acts,pre){return acts.filter(function(a){return a.k.indexOf(pre+':')===0}).map(function(a){return {k:a.k.slice(pre.length+1),n:a.n}}).slice(0,12)}
+function chart(series){
+  var days=[],now=new Date();for(var i=29;i>=0;i--){var d=new Date(now.getTime()-i*864e5);days.push(d.toISOString().slice(0,10))}
+  var m={};series.forEach(function(s){(m[s.key]=m[s.key]||{})[s.day]=s.n});
+  var keys=[['created','#e8728f'],['new','#9b78d0'],['visit','#f2b24a']],mx=1;
+  keys.forEach(function(k){days.forEach(function(d){mx=Math.max(mx,(m[k[0]]||{})[d]||0)})});
+  var W=640,H=180,pl=26,bw=(W-pl)/30,g='';
+  for(var t=0;t<=2;t++){var y=H-20-(H-30)*t/2;g+='<line x1="'+pl+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="rgba(110,80,100,.15)"/><text x="0" y="'+(y+4)+'" font-size="10" fill="#7d6a75">'+Math.round(mx*t/2)+'</text>'}
+  days.forEach(function(d,i){keys.forEach(function(k,j){var v=(m[k[0]]||{})[d]||0,h=(H-30)*v/mx,x=pl+i*bw+j*(bw/3.4)+1;g+='<rect x="'+x.toFixed(1)+'" y="'+(H-20-h).toFixed(1)+'" width="'+(bw/3.4-1).toFixed(1)+'" height="'+h.toFixed(1)+'" rx="1.5" fill="'+k[1]+'"/>'});if(i%5===0)g+='<text x="'+(pl+i*bw)+'" y="'+(H-4)+'" font-size="9.5" fill="#7d6a75">'+d.slice(5)+'</text>'});
+  $('#chart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Daily counts">'+g+'</svg>';
+}
+function render(d){
+  var t=d.totals||{};$('#online').textContent=fmt(t.online);$('#live').className='live'+(t.online?'':' off');
+  var rate=t.visitors?Math.round((t.repeat_visitors||0)/t.visitors*100):0,mins=t.players?Math.round((t.pings||0)*.5/t.players):0,hrs=Math.round((t.pings||0)*.5/60);
+  var cards=[['Pets created',t.pets],['New pets, 24h',t.created24],['Visitors, all time',t.visitors],['New visitors, 24h',t.new24],['Active, 24h',t.a24],['Active, 7 days',t.a7],['Active, 30 days',t.a30],['Came back',rate+'%'],['Avg minutes per person',mins],['Hours played, total',hrs]];
+  var g=$('#grid');g.textContent='';cards.forEach(function(c){var s=el('div','stat'),b=el('b',null,typeof c[1]==='string'?c[1]:fmt(c[1]));s.appendChild(b);s.appendChild(el('span',null,c[0]));g.appendChild(s)});
+  chart(d.series||[]);
+  bars($('#species'),d.species||[]);bars($('#breeds'),d.breeds||[],function(k){return pretty(k.split(':')[1])+' ('+k.split(':')[0]+')'});
+  var a=d.acts||[];bars($('#treats'),pick(a,'treat'));bars($('#toys'),pick(a,'toy'));bars($('#loves'),pick(a,'love'));bars($('#modes'),pick(a,'mode'));
+  var other=a.filter(function(x){return /^(share|photo|candle|install|export|import|memorial)/.test(x.k)}).map(function(x){return {k:x.k.replace(':',' · '),n:x.n}});bars($('#other'),other);
+  bars($('#countries'),d.countries||[],function(k){return k});
+  var hh=(d.active_hours||[]).map(function(x){return {k:new Date(x.h*36e5).toLocaleTimeString([], {hour:'numeric'}),n:x.n}});bars($('#hours'),hh,function(k){return k});
+  $('#upd').textContent='Updated '+new Date(d.now).toLocaleTimeString()+' · refreshes every 20 seconds';
+}
+function load(){
+  var tk=localStorage.getItem(KEY);if(!tk){show(false);return}
+  fetch(API,{headers:{Authorization:'Bearer '+tk},cache:'no-store'}).then(function(r){
+    if(r.status===401){localStorage.removeItem(KEY);show(false);$('#lerr').textContent='That key did not work.';throw 0}
+    if(!r.ok)throw new Error('bad');return r.json()}).then(function(d){show(true);render(d)}).catch(function(e){if(e!==0)$('#upd').textContent='Could not load. Retrying…'});
+}
+function show(ok){$('#login').hidden=ok;$('#dash').hidden=!ok;clearInterval(timer);if(ok)timer=setInterval(load,20000)}
+$('#go').addEventListener('click',function(){var v=$('#tok').value.trim();if(!v)return;localStorage.setItem(KEY,v);$('#tok').value='';$('#lerr').textContent='';load()});
+$('#tok').addEventListener('keydown',function(e){if(e.key==='Enter')$('#go').click()});
+$('#refresh').addEventListener('click',load);$('#out').addEventListener('click',function(){localStorage.removeItem(KEY);show(false)});
+if(location.hash.length>10){localStorage.setItem(KEY,location.hash.slice(1));history.replaceState(null,'',location.pathname)}
+load();
+})();
+</script>
+</body>
+</html>
