@@ -30,7 +30,7 @@
   color-scheme: light;
 }
 #app[data-time="night"]{
-  --ink:#f4e8f0; --ink-soft:#c7b6cf; --card:rgba(32,28,66,.74); --line:rgba(255,255,255,.14);
+  --ink:#f4e8f0; --ink-soft:#c7b6cf; --card:rgba(28,24,60,.9); --line:rgba(255,255,255,.14);
   --shadow:0 18px 50px -20px rgba(0,0,0,.6);
   color-scheme: dark;
 }
@@ -248,7 +248,9 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
 #app[data-time="night"] .mhearts{color:#dccbe6;text-shadow:0 1px 8px rgba(20,10,50,.8)}
 .ui-bottom{position:absolute;left:0;right:0;bottom:0;padding:0 10px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;z-index:3;transition:opacity .8s}
 .ui-bottom>*{pointer-events:auto}
-#meadow.sleeping .ui-bottom{opacity:.6}
+#meadow.sleeping .tray,#meadow.sleeping .dock{background:rgba(22,18,50,.95);backdrop-filter:none;-webkit-backdrop-filter:none}
+#meadow.sleeping .dock button[aria-pressed=false]{color:#e4d6ec}
+#meadow.sleeping .tray-hint{color:#e4d6ec;font-size:15px}
 .tray{display:flex;gap:8px;align-items:center;justify-content:center;min-height:72px;max-width:min(620px,100%);padding:8px 12px;border-radius:22px;background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:var(--shadow);overflow-x:auto;touch-action:pan-x}
 .tray-hint{font-size:14.5px;color:var(--ink-soft);padding:0 6px;text-align:center;line-height:1.35}
 .tray:has(.item-chip) .tray-hint{flex:none;width:150px;font-size:12.5px;text-align:left}
