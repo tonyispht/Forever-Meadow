@@ -269,6 +269,11 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
             <button type="button" id="spDog" aria-pressed="true">Dog</button>
             <button type="button" id="spCat" aria-pressed="false">Cat</button>
           </div>
+          <h3>Age</h3>
+          <div class="seg" role="group" aria-label="Age">
+            <button type="button" id="agBaby" aria-pressed="false">Puppy</button>
+            <button type="button" id="agAdult" aria-pressed="true">Full grown</button>
+          </div>
           <h3>Breed</h3>
           <div class="breeds" id="breedGrid"></div>
         </section>
@@ -442,10 +447,17 @@ var NECKS={none:'None',bandana:'Bandana',bowtie:'Bow tie',scarf:'Scarf',bell:'Be
 var HATS={none:'None',partyhat:'Party hat',beanie:'Beanie',flowers:'Flower crown',bow:'Hair bow'};
 var GLASSES={none:'None',round:'Round glasses',sun:'Sunglasses'};
 function defOutfit(){return {top:'none',topColor:'#e8728f',neck:'none',neckColor:'#e25b4f',hat:'none',hatColor:'#f2c46d',glasses:'none',glassColor:'#2a2a36',harness:false,harnessColor:'#58a6d8',leash:false,leashColor:'#e25b4f'}}
-function fixPet(p){p.outfit=Object.assign(defOutfit(),p.outfit||{});return p}
+function fixPet(p){p.age=p.age==='baby'?'baby':'adult';p.outfit=Object.assign(defOutfit(),p.outfit||{});return p}
 var HALOC=['#f2c46d','#ffe9a6','#ffd1e0','#cfe8ff','#d8c7ff'];
 var WINGC=['#ffffff','#fff1d6','#ffe3ec','#e1efff','#eadfff'];
 
+function effBreed(cfg){
+  var b=breedOf(cfg); if(cfg.age!=='baby') return b;
+  var n={}; for(var k in b) n[k]=b[k];
+  n.hw=b.hw*1.1; n.hh=b.hh*1.08; n.mw=b.mw*.82; n.mh=b.mh*.82; n.bw=b.bw*.76; n.bry=47;
+  n.leg=Math.max(12,b.leg*.7); n.scale=b.scale*.74; n.ep=b.ep>5?b.ep*.85:b.ep*1.12;
+  return n;
+}
 function breedOf(cfg){var l=BREEDS[cfg.species];for(var i=0;i<l.length;i++)if(l[i].id===cfg.breed)return l[i];return l[0]}
 
 /* =========================================================
@@ -453,8 +465,8 @@ function breedOf(cfg){var l=BREEDS[cfg.species];for(var i=0;i<l.length;i++)if(l[
    ========================================================= */
 function buildPet(cfg,uid,o){
   o=o||{};
-  var cat=cfg.species==='cat', b=breedOf(cfg), C=cfg.colors, PT=PATTERNS[cfg.pattern]||PATTERNS.none;
-  var cx=200, cy=190, hw=b.hw, hh=b.hh, bw=b.bw, bry=56, bcy=388-b.leg-bry;
+  var cat=cfg.species==='cat', baby=cfg.age==='baby', b=effBreed(cfg), C=cfg.colors, PT=PATTERNS[cfg.pattern]||PATTERNS.none;
+  var cx=200, cy=190, hw=b.hw, hh=b.hh, bw=b.bw, bry=b.bry||56, bcy=388-b.leg-bry;
   var coat=C.coat, acc=C.accent, belly=C.belly;
   var line=shade(coat,-0.38), ink='#2a1f28';
   var earType=cfg.ears, ep=(earType===b.ears)?b.ep:DEF_EP[earType];
@@ -646,7 +658,7 @@ function buildPet(cfg,uid,o){
   }
 
   /* ----- head ----- */
-  var ex=hw*(cat?0.46:0.42), ey=cy+hh*0.02;
+  var ex=hw*(cat?0.46:0.42)*(baby?1.04:1), ey=cy+hh*(baby?0.1:0.02);
   var my=cy+hh*(cat?0.48:0.50), mw=b.mw, mh=b.mh;
   var lightMz=b.lightMuzzle||PT.whiteMuzzle;
   var mzFill=(PT.mask)?acc:(lightMz?belly:shade(coat,lum(coat)>.6?-.04:.14));
@@ -684,6 +696,7 @@ function buildPet(cfg,uid,o){
   }
   var cheeks='';
   var ir=cat?[12.5,13.5]:[11.5,12.5], pu=cat?[3.6,9.5]:[5.8,6.4];
+  if(baby){ir=[ir[0]*1.18,ir[1]*1.18];pu=[pu[0]*1.2,pu[1]*1.2]}
   var eyeDefs='';
   function eye(side){
     var x=cx+side*ex, id=uid+(side<0?'eL':'eR'), dl=(-Math.random()*5).toFixed(2);
@@ -762,7 +775,7 @@ function buildPet(cfg,uid,o){
     +'<radialGradient id="'+uid+'gl"><stop offset="0" stop-color="'+cfg.haloColor+'" stop-opacity=".7"/><stop offset="1" stop-color="'+cfg.haloColor+'" stop-opacity="0"/></radialGradient>'
     +'</defs>';
   var vb=o.vb||'0 0 400 420';
-  var label=(cfg.name?esc(cfg.name)+', ':'')+'a '+esc(breedOf(cfg).name.toLowerCase());
+  var label=(cfg.name?esc(cfg.name)+', ':'')+'a '+(baby?(cat?'kitten, ':'puppy, '):'')+esc(breedOf(cfg).name.toLowerCase());
   return '<svg class="pet '+(cat?'cat':'dog')+(o.static?' static':'')+'" viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+label+'" style="--glow:'+(o.glow==null?.55:o.glow)+';--lx:0;--ly:0;--hr:0;--sl:0;--amp:5;--wagdur:2.6s">'
     +defs
     +'<ellipse class="shadow" cx="200" cy="391" rx="'+(bw+30)+'" ry="12" fill="#3a2438" opacity=".17"/>'
@@ -836,7 +849,7 @@ function petFromBreed(species,id,name,keep){
     colors:{coat:b.coat,accent:b.accent,belly:b.belly,eyes:b.eyes,nose:b.nose,collar:keep.collar||(species==='cat'?'#8a79d6':'#e8728f')},
     pattern:b.pattern,ears:b.ears,tail:b.tail,size:1,
     collarOn:keep.collarOn!==false,halo:keep.halo!==false,wings:keep.wings!==false,
-    haloColor:keep.haloColor||'#f2c46d',wingColor:keep.wingColor||'#ffffff',outfit:Object.assign(defOutfit(),keep.outfit||{})};
+    haloColor:keep.haloColor||'#f2c46d',wingColor:keep.wingColor||'#ffffff',outfit:Object.assign(defOutfit(),keep.outfit||{}),age:keep.age||'adult'};
 }
 function loadState(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.pet&&d.pet.colors&&BREEDS[d.pet.species]){state.pet=fixPet(d.pet);state.hearts=+d.hearts||0;state.notes=Array.isArray(d.notes)?d.notes:[];state.whispers=d.whispers!==false}}}catch(e){}}
 function saveState(){try{localStorage.setItem(KEY,JSON.stringify({pet:state.pet,hearts:state.hearts,notes:state.notes.slice(-24),whispers:state.whispers}))}catch(e){}}
@@ -1002,7 +1015,7 @@ function buildCreateUI(){
 function buildBreedGrid(){
   var sp=state.pet.species;
   $('#breedGrid').innerHTML=BREEDS[sp].map(function(b,i){
-    var cfg=petFromBreed(sp,b.id,'');cfg.collarOn=false;cfg.halo=false;cfg.wings=false;
+    var cfg=petFromBreed(sp,b.id,'');cfg.age=state.pet.age;cfg.collarOn=false;cfg.halo=false;cfg.wings=false;
     return '<button type="button" class="breed" data-breed="'+b.id+'" aria-pressed="false">'+buildPet(cfg,'bt'+i,{static:true,thumb:true,vb:'10 50 380 350'})+'<span>'+esc(b.name)+'</span></button>';
   }).join('');
 }
@@ -1017,7 +1030,7 @@ function syncRows(list,scope){
 }
 function syncCreate(){
   var p=state.pet;
-  $('#spDog').setAttribute('aria-pressed',p.species==='dog');$('#spCat').setAttribute('aria-pressed',p.species==='cat');
+  $('#agBaby').textContent=p.species==='cat'?'Kitten':'Puppy';$('#agBaby').setAttribute('aria-pressed',p.age==='baby');$('#agAdult').setAttribute('aria-pressed',p.age!=='baby');$('#spDog').setAttribute('aria-pressed',p.species==='dog');$('#spCat').setAttribute('aria-pressed',p.species==='cat');
   $$('.breed').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.breed===p.breed)});
   syncRows(ROWS,$('#colorRows'));syncRows(ANGEL_ROWS,$('#angelRows'));syncRows(OUTFIT_ROWS,$('#outfitRows'));
   $$('[data-of]').forEach(function(c){var kv=c.dataset.of.split(':');c.setAttribute('aria-pressed',p.outfit[kv[0]]===kv[1])});
@@ -1041,10 +1054,12 @@ function changed(){syncCreate();saveSoon()}
 
 function wireCreate(){
   $('#petName').addEventListener('input',function(e){state.pet.name=e.target.value.slice(0,24);$('#pvName').textContent=state.pet.name||'Your angel';var h=$('#nameHint');h.textContent='';h.classList.remove('need');saveSoon()});
-  function setSpecies(sp){if(state.pet.species===sp)return;var keep={collar:null,collarOn:state.pet.collarOn,halo:state.pet.halo,wings:state.pet.wings,haloColor:state.pet.haloColor,wingColor:state.pet.wingColor,outfit:state.pet.outfit};state.pet=petFromBreed(sp,BREEDS[sp][0].id,state.pet.name,keep);buildBreedGrid();changed()}
+  function setSpecies(sp){if(state.pet.species===sp)return;var keep={collar:null,collarOn:state.pet.collarOn,halo:state.pet.halo,wings:state.pet.wings,haloColor:state.pet.haloColor,wingColor:state.pet.wingColor,outfit:state.pet.outfit,age:state.pet.age};state.pet=petFromBreed(sp,BREEDS[sp][0].id,state.pet.name,keep);buildBreedGrid();changed()}
+  function setAge(a){if(state.pet.age===a)return;state.pet.age=a;buildBreedGrid();changed()}
+  $('#agBaby').addEventListener('click',function(){setAge('baby')});$('#agAdult').addEventListener('click',function(){setAge('adult')});
   $('#spDog').addEventListener('click',function(){setSpecies('dog')});
   $('#spCat').addEventListener('click',function(){setSpecies('cat')});
-  $('#breedGrid').addEventListener('click',function(e){var b=e.target.closest('[data-breed]');if(!b)return;var p=state.pet;state.pet=petFromBreed(p.species,b.dataset.breed,p.name,{collar:p.colors.collar,collarOn:p.collarOn,halo:p.halo,wings:p.wings,haloColor:p.haloColor,wingColor:p.wingColor,outfit:p.outfit});changed()});
+  $('#breedGrid').addEventListener('click',function(e){var b=e.target.closest('[data-breed]');if(!b)return;var p=state.pet;state.pet=petFromBreed(p.species,b.dataset.breed,p.name,{collar:p.colors.collar,collarOn:p.collarOn,halo:p.halo,wings:p.wings,haloColor:p.haloColor,wingColor:p.wingColor,outfit:p.outfit,age:p.age});changed()});
   function colorEvents(scope,list){
     scope.addEventListener('click',function(e){var s=e.target.closest('.sw[data-v]');if(!s)return;var row=s.closest('[data-row]');var r=list.filter(function(x){return x.id===row.dataset.row})[0];r.set(state.pet,s.dataset.v);changed()});
     scope.addEventListener('input',function(e){if(e.target.type!=='color')return;var row=e.target.closest('[data-row]');var r=list.filter(function(x){return x.id===row.dataset.row})[0];r.set(state.pet,e.target.value);syncRows(list,scope);renderPreview();saveSoon()});
@@ -1112,8 +1127,8 @@ function layout(){
 }
 function pondPt(){var d=M.pond;return {x:d.x+rand(-.6,.6)*d.rx,y:d.y+rand(-.4,.4)*d.ry}}
 function sizePet(){
-  var b=breedOf(state.pet);M.h0=M.petH*state.pet.size*b.scale;M.w0=M.h0*400/420;
-  petEl.style.width=M.w0+'px';petEl.style.height=M.h0+'px';petEl.style.transformOrigin='50% '+(388/420*100)+'%';M.wlPct=(420-((388-b.leg-56)+10))/420*100;
+  var b=effBreed(state.pet);M.h0=M.petH*state.pet.size*b.scale;M.w0=M.h0*400/420;
+  petEl.style.width=M.w0+'px';petEl.style.height=M.h0+'px';petEl.style.transformOrigin='50% '+(388/420*100)+'%';M.wlPct=(420-((388-b.leg-(b.bry||56))+10))/420*100;
 }
 function glowVal(){return clamp(.42+state.hearts/500,.42,.95)}
 function mountPet(){
