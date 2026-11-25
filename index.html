@@ -124,6 +124,7 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
 /* ---------- meadow view ---------- */
 .stage{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;z-index:1}
 .world{position:absolute;inset:0;pointer-events:none}
+.qrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.qrow .qlabel{flex:0 0 138px;font:600 13px var(--body);color:var(--ink)}.qrow .chips{margin:0;gap:6px}.qrow .chip{padding:6px 11px;font-size:12.5px}
 .orows{margin:6px 0 4px}.orows .crow{margin-top:2px}
 .pet{--rim:#ffd9a0;--rimo:.5}
 #app[data-time=night] .pet{--rim:#9fb8ff;--rimo:.42}
@@ -307,8 +308,9 @@ h3{font:700 13px var(--body);letter-spacing:.05em;text-transform:uppercase;color
           <h2>Little quirks</h2>
           <p class="sub">The things that made them <em>them</em>. Pick any that fit.</p>
           <div class="chips" id="quirkChips"></div>
+          <div id="quirkSides"></div>
           <div class="orows" data-rows="oeye2"></div>
-          <p class="sub" style="margin-top:6px">Teeth show when they smile.</p>
+          <p class="sub" style="margin-top:6px">Left and right are as you see them in the preview. Teeth show when they smile.</p>
         </section>
 
         <section class="card" id="wardrobe">
@@ -463,9 +465,11 @@ var NECKS={none:'None',bandana:'Bandana',bowtie:'Bow tie',scarf:'Scarf',bell:'Be
 var HATS={none:'None',partyhat:'Party hat',beanie:'Beanie',flowers:'Flower crown',bow:'Hair bow'};
 var GLASSES={none:'None',round:'Round glasses',sun:'Sunglasses'};
 function defOutfit(){return {top:'none',topColor:'#e8728f',topTrim:null,neck:'none',neckColor:'#e25b4f',hat:'none',hatColor:'#f2c46d',glasses:'none',glassColor:'#2a2a36',harness:false,harnessColor:'#58a6d8',leash:false,leashColor:'#e25b4f'}}
-var QUIRKS=[['tongue','Tongue out'],['snaggle','Snaggletooth'],['missing','Missing tooth'],['hetero','Odd-colored eyes'],['cloudy','Cloudy eye'],['gray','Gray muzzle'],['wonky','Wonky ear'],['freckles','Freckles']];
-function defQuirks(){return {tongue:false,snaggle:false,missing:false,hetero:false,eye2:'#5fa8dc',cloudy:false,gray:false,wonky:false,freckles:false}}
-function fixPet(p){p.quirks=Object.assign(defQuirks(),p.quirks||{});p.age=p.age==='baby'?'baby':'adult';p.outfit=Object.assign(defOutfit(),p.outfit||{});return p}
+var QUIRKS=[['tongue','Tongue out'],['missing','Missing tooth'],['gray','Gray muzzle'],['freckles','Freckles'],['notail','Missing tail']];
+var QSIDES=[['cloudy','Cloudy eye','lrb'],['noeye','Missing eye','lrb'],['hetero','Odd-colored eye','lr'],['wonky','Wonky ear','lrb'],['snaggle','Snaggletooth','lrb'],['scar','Scar','lr'],['legF','Missing front leg','lrb'],['legH','Missing back leg','lrb']];
+var QWORD={l:'Left',r:'Right',b:'Both'};
+function defQuirks(){return {tongue:false,missing:false,gray:false,freckles:false,notail:false,cloudy:'',noeye:'',hetero:'',eye2:'#5fa8dc',wonky:'',snaggle:'',scar:'',legF:'',legH:''}}
+function fixPet(p){p.quirks=Object.assign(defQuirks(),p.quirks||{});QSIDES.forEach(function(q){var v=p.quirks[q[0]];p.quirks[q[0]]=v===true?'r':(v?v:'')});p.age=p.age==='baby'?'baby':'adult';p.outfit=Object.assign(defOutfit(),p.outfit||{});return p}
 var HALOC=['#f2c46d','#ffe9a6','#ffd1e0','#cfe8ff','#d8c7ff'];
 var WINGC=['#ffffff','#fff1d6','#ffe3ec','#e1efff','#eadfff'];
 
@@ -490,7 +494,9 @@ function buildPet(cfg,uid,o){
   var earType=cfg.ears, ep=(earType===b.ears)?b.ep:DEF_EP[earType];
   var inner=mix(acc,'#f2a3b6',.55), dark=shade(acc,-.62);
   var st='stroke="'+line+'" stroke-opacity="'+(lum(coat)>.7?.85:.5)+'" stroke-width="1.6" stroke-linejoin="round"';
-  var Q=cfg.quirks||{}, grayCol=lum(coat)>.7?'#cfc9c4':'#f1eeee';
+  var Q=cfg.quirks||{};
+  function has(v,side){return v==='b'||v===(side>0?'r':'l')}
+  var grayCol=lum(coat)>.7?'#cfc9c4':'#f1eeee';
   var haloOn=cfg.halo&&!o.thumb, wingsOn=cfg.wings&&!o.thumb, collarOn=cfg.collarOn&&!o.thumb;
   /* realism helpers: seeded fur so a pet never "shimmers" between redraws */
   var hs=0,hsrc=cfg.breed+coat+acc; for(var hi=0;hi<hsrc.length;hi++)hs=(hs*31+hsrc.charCodeAt(hi))|0;
@@ -551,9 +557,13 @@ function buildPet(cfg,uid,o){
   }
   var earMode=PT.ears||'accent';
   var fillL=earMode==='coat'?coat:acc, fillR=earMode==='coat'?coat:(earMode==='split'?dark:acc);
-  var wk='', wke='';
-  if(Q.wonky&&earType!=='poodle'){var fl2=(earType==='floppy'||earType==='long');wk='<g transform="rotate('+(fl2?42:-52)+' '+(fl2?(cx-hw*.8):ax)+' '+(fl2?(cy-hh*.5):(ay+28))+')">';wke='</g>'}
-  var earsBack='<g>'+earBack(fillL)+'</g><g transform="translate(400 0) scale(-1 1)">'+wk+earBack(fillR)+wke+'</g>';
+  function wkW(side){
+    if(earType==='poodle'||!has(Q.wonky,side))return ['',''];
+    var fl2=(earType==='floppy'||earType==='long');
+    return ['<g transform="rotate('+(fl2?42:-52)+' '+(fl2?(cx-hw*.8):ax)+' '+(fl2?(cy-hh*.5):(ay+28))+')">','</g>'];
+  }
+  var wl=wkW(-1), wr=wkW(1);
+  var earsBack='<g>'+wl[0]+earBack(fillL)+wl[1]+'</g><g transform="translate(400 0) scale(-1 1)">'+wr[0]+earBack(fillR)+wr[1]+'</g>';
   var earsFront='';
   if(earType==='poodle'){
     earsFront=[[cx,cy-hh-6,30],[cx-26,cy-hh+4,23],[cx+26,cy-hh+4,23]].map(function(p){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+p[2]+'" fill="'+coat+'" '+st+'/>'}).join('')
@@ -575,7 +585,7 @@ function buildPet(cfg,uid,o){
     if(PT.tabby) tailSVG+='<path pathLength="100" d="'+T[0]+'" fill="none" stroke="'+acc+'" stroke-width="'+w+'" stroke-dasharray="6 11" stroke-linecap="butt" opacity=".85"/>';
     if(PT.points) tailSVG+='<path pathLength="100" d="'+T[0]+'" fill="none" stroke="'+acc+'" stroke-width="'+w+'" stroke-dasharray="0 78 22" stroke-linecap="round"/>';
   }
-  tailSVG='<g class="tail">'+tailSVG+'</g>';
+  tailSVG=Q.notail?'':'<g class="tail">'+tailSVG+'</g>';
 
   /* ----- wings ----- */
   var wingSVG='';
@@ -587,10 +597,10 @@ function buildPet(cfg,uid,o){
   }
 
   /* ----- body ----- */
-  var lx=cx-bw*0.36, rx=cx+bw*0.36;
+  var lx=cx-bw*0.36, rx=cx+bw*0.36, drop=(Q.legF==='b')?Math.max(0,b.leg-8):0;
   var sockFill=PT.pawsAccent?acc:belly, showSock=PT.socks||PT.pawsAccent;
-  var hind='<ellipse cx="'+(cx-bw*0.84)+'" cy="383" rx="26" ry="13" fill="'+(showSock?sockFill:coat)+'" '+st+'/><ellipse cx="'+(cx+bw*0.84)+'" cy="383" rx="26" ry="13" fill="'+(showSock?sockFill:coat)+'" '+st+'/>';
-  var legs=[lx,rx].map(function(x){
+  var hind='<g transform="translate(0 '+(-drop)+')">'+(has(Q.legH,-1)?'':'<ellipse cx="'+(cx-bw*0.84)+'" cy="383" rx="26" ry="13" fill="'+(showSock?sockFill:coat)+'" '+st+'/>')+(has(Q.legH,1)?'':'<ellipse cx="'+(cx+bw*0.84)+'" cy="383" rx="26" ry="13" fill="'+(showSock?sockFill:coat)+'" '+st+'/>')+'</g>';
+  var legs=[[lx,-1],[rx,1]].map(function(a){var x=a[0];if(has(Q.legF,a[1]))return '<ellipse cx="'+x+'" cy="'+(bcy+bry-8)+'" rx="15" ry="10" fill="'+coat+'" '+st+'/>';
     return '<rect x="'+(x-19)+'" y="'+(bcy+10)+'" width="38" height="'+(388-bcy-10)+'" rx="19" fill="'+coat+'" '+st+'/>'
       +(showSock?'<rect x="'+(x-19)+'" y="362" width="38" height="26" rx="16" fill="'+sockFill+'" '+st+'/>':'')
       +'<rect x="'+(x-19)+'" y="'+(bcy+10)+'" width="38" height="'+(388-bcy-10)+'" rx="19" fill="url(#'+uid+'ls)"/>'
@@ -617,7 +627,7 @@ function buildPet(cfg,uid,o){
   /* ----- outfit: clothing, neckwear, harness, leash ----- */
   var OF=cfg.outfit||{}, wear=!o.thumb, cloth='', neckwear='', gear='', leashSVG='', hatSVG='', glassSVG='', headH=0;
   if(wear){
-    var topY=bcy-bry, botY=bcy+bry, legXs=[lx,rx];
+    var topY=bcy-bry, botY=bcy+bry, legXs=[lx,rx].filter(function(x,i){return !has(Q.legF,i?1:-1)});
     var tc=OF.topColor||'#e8728f', tlt=shade(tc,.24), tdk=OF.topTrim||shade(tc,-.2), tln=shade(tc,-.42);
     var tst='stroke="'+tln+'" stroke-width="2.5" stroke-linejoin="round"';
     var sleeve=function(x,puff){return '<rect x="'+(x-20)+'" y="'+(bcy+6)+'" width="40" height="'+(372-bcy-6)+'" rx="15" fill="'+tc+'" '+tst+'/>'+(puff?'<path d="M'+(x-18)+' '+(bcy+34)+' Q'+x+' '+(bcy+42)+' '+(x+18)+' '+(bcy+34)+'" fill="none" stroke="'+tln+'" stroke-width="2" opacity=".6"/>':'')+'<rect x="'+(x-21)+'" y="364" width="42" height="11" rx="5" fill="'+tdk+'" '+tst+'/>'};
@@ -706,6 +716,7 @@ function buildPet(cfg,uid,o){
   [-1,1].forEach(function(sd){[[.42,-.12],[.62,.05],[.3,.12],[.5,.22]].forEach(function(d){mdots+='<circle cx="'+f1(cx+sd*mw*d[0])+'" cy="'+f1(my+mh*d[1])+'" r="1.25" fill="'+shade(mzFill,-.6)+'" opacity=".4"/>'})});
   var muzzle='<ellipse cx="'+cx+'" cy="'+my+'" rx="'+mw+'" ry="'+mh+'" fill="url(#'+uid+'mz)"/>'+mdots;
   if(Q.freckles)[[-.5,-.3],[-.3,-.1],[-.62,.05],[.5,-.3],[.3,-.1],[.62,.05],[-.2,-.38],[.2,-.38],[-.42,.2],[.42,.2],[-.8,-.15],[.8,-.15]].forEach(function(d){muzzle+='<circle cx="'+f1(cx+d[0]*mw*1.1)+'" cy="'+f1(my+d[1]*mh)+'" r="1.9" fill="'+shade(mzFill,-.6)+'" opacity=".55"/>'});
+  [-1,1].forEach(function(sd){if(has(Q.scar,sd)){var sx1=cx+sd*(mw+16),sy1=my-20,sx2=cx+sd*(mw+36),sy2=my+14,tk='';for(var k=0;k<4;k++){var tt=(k+.5)/4,tx=sx1+(sx2-sx1)*tt,ty=sy1+(sy2-sy1)*tt;tk+='M'+f1(tx-4)+' '+f1(ty-1.5)+'l8 3'}muzzle+='<path d="M'+sx1+' '+sy1+' L'+sx2+' '+sy2+'" stroke="#d98d8d" stroke-width="3.4" stroke-linecap="round"/><path d="M'+sx1+' '+sy1+' L'+sx2+' '+sy2+'" stroke="#f6c6c0" stroke-width="1.2" stroke-linecap="round"/><path d="'+tk+'" stroke="#fff2ee" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>'}});
   if(Q.gray)muzzle+='<ellipse cx="'+cx+'" cy="'+(my+2)+'" rx="'+(mw*1.45)+'" ry="'+(mh*1.5)+'" fill="url(#'+uid+'gr)"/><ellipse cx="'+(cx-ex)+'" cy="'+(ey-25)+'" rx="13" ry="7" fill="url(#'+uid+'gr)"/><ellipse cx="'+(cx+ex)+'" cy="'+(ey-25)+'" rx="13" ry="7" fill="url(#'+uid+'gr)"/>';
   var nose=cat
    ?'<path d="M'+(cx-7)+' '+(ny-3)+' Q'+cx+' '+(ny-6)+' '+(cx+7)+' '+(ny-3)+' Q'+(cx+3)+' '+(ny+5)+' '+cx+' '+(ny+7)+' Q'+(cx-3)+' '+(ny+5)+' '+(cx-7)+' '+(ny-3)+'Z" fill="url(#'+uid+'ns)"/><ellipse cx="'+(cx-2)+'" cy="'+(ny-3)+'" rx="3" ry="1.4" fill="#fff" opacity=".4"/>'
@@ -713,7 +724,7 @@ function buildPet(cfg,uid,o){
   var tng='', fang='', teeth='';
   if(Q.tongue){var tw=cat?9:13, th=cat?13:19, t0=y0+8;
     tng='<path d="M'+(cx-tw)+' '+t0+' Q'+(cx-tw-1)+' '+(t0+th)+' '+cx+' '+(t0+th+2)+' Q'+(cx+tw+1)+' '+(t0+th)+' '+(cx+tw)+' '+t0+' Q'+cx+' '+(t0+4)+' '+(cx-tw)+' '+t0+'Z" fill="#f2879f" stroke="#c4566f" stroke-width="1.4" stroke-linejoin="round"/><path d="M'+cx+' '+(t0+3)+' V'+(t0+th-2)+'" stroke="#c4566f" stroke-width="1.4" stroke-linecap="round" opacity=".7"/><ellipse cx="'+(cx-tw*.35)+'" cy="'+(t0+th*.45)+'" rx="2.2" ry="4" fill="#fff" opacity=".35"/>';}
-  if(Q.snaggle){var fx0=cx+mwid*.78;fang='<path d="M'+(fx0-3.6)+' '+(y0+14)+' L'+fx0+' '+(y0+4.5)+' L'+(fx0+3.6)+' '+(y0+14)+'Z" fill="#fffdf6" stroke="#cdbfae" stroke-width="1.2" stroke-linejoin="round"/>';}
+  [-1,1].forEach(function(sd){if(has(Q.snaggle,sd)){var fx0=cx+sd*mwid*.78;fang+='<path d="M'+(fx0-3.6)+' '+(y0+14)+' L'+fx0+' '+(y0+4.5)+' L'+(fx0+3.6)+' '+(y0+14)+'Z" fill="#fffdf6" stroke="#cdbfae" stroke-width="1.2" stroke-linejoin="round"/>'}});
   if(Q.missing){[-.62,-.22,.22,.62].forEach(function(o,i){if(i===2)return;var tx=cx+o*mwid,ty=y0+7+3.5*(1-o*o);teeth+='<rect x="'+f1(tx-2.8)+'" y="'+f1(ty-.5)+'" width="5.6" height="6" rx="2" fill="#fffdf6" stroke="#cdbfae" stroke-width="1"/>'})}
   var mclosed='<g class="mouth-closed">'+tng+'<path d="M'+cx+' '+y0+' V'+(y0+7)+' M'+cx+' '+(y0+7)+' Q'+(cx-mwid*0.45)+' '+(y0+17)+' '+(cx-mwid)+' '+(y0+9)+' M'+cx+' '+(y0+7)+' Q'+(cx+mwid*0.45)+' '+(y0+17)+' '+(cx+mwid)+' '+(y0+9)+'" fill="none" stroke="'+shade(ink,.1)+'" stroke-opacity=".85" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>'+fang+'</g>';
   var dep=cat?20:34, mop='<g class="mouth-open"><path d="M'+(cx-mwid)+' '+(y0+7)+' Q'+cx+' '+(y0+dep+6)+' '+(cx+mwid)+' '+(y0+7)+' Q'+cx+' '+(y0+14)+' '+(cx-mwid)+' '+(y0+7)+'Z" fill="#6a2a3d" stroke="'+ink+'" stroke-width="2.4" stroke-linejoin="round"/>'+teeth+'<ellipse class="tongue" cx="'+cx+'" cy="'+(y0+20)+'" rx="10" ry="10" fill="#f48fa6"/></g>';
@@ -727,7 +738,10 @@ function buildPet(cfg,uid,o){
   if(baby){ir=[ir[0]*1.18,ir[1]*1.18];pu=[pu[0]*1.2,pu[1]*1.2]}
   var eyeDefs='';
   function eye(side){
-    var ec=(side>0&&Q.hetero)?Q.eye2:C.eyes, irId=uid+((side>0&&Q.hetero)?'ir2':'ir'), x=cx+side*ex, id=uid+(side<0?'eL':'eR'), dl=(-Math.random()*5).toFixed(2);
+    var ec=has(Q.hetero,side)?Q.eye2:C.eyes, irId=uid+(has(Q.hetero,side)?'ir2':'ir'), x=cx+side*ex, id=uid+(side<0?'eL':'eR'), dl=(-Math.random()*5).toFixed(2);
+    if(has(Q.noeye,side)){
+      return '<g><ellipse cx="'+x+'" cy="'+(ey+2)+'" rx="'+f1(ir[0]*2.2)+'" ry="'+f1(ir[1]*1.5)+'" fill="url(#'+uid+'sk)"/><ellipse cx="'+x+'" cy="'+(ey+1)+'" rx="'+f1(ir[0]*1.15)+'" ry="'+f1(ir[1]*.62)+'" fill="'+shade(coat,-.18)+'" opacity=".55"/><path d="M'+(x-ir[0]*1.2)+' '+(ey+1)+' Q'+x+' '+(ey+ir[1]*.95)+' '+(x+ir[0]*1.2)+' '+(ey+1)+'" fill="none" stroke="'+ink+'" stroke-width="3" stroke-linecap="round"/></g>';
+    }
     var rw=ir[0]*1.2, hx=rw*1.12, tk=rh0(), bk=rh0()*.85;
     function rh0(){return ir[1]*.95*(cat?1.95:1.8)}
     var ald='M'+f1(x-hx)+' '+f1(ey+1)+' Q'+f1(x)+' '+f1(ey-tk)+' '+f1(x+hx)+' '+f1(ey+1)+' Q'+f1(x)+' '+f1(ey+bk*1.6)+' '+f1(x-hx)+' '+f1(ey+1)+'Z';
@@ -741,7 +755,7 @@ function buildPet(cfg,uid,o){
       +'<path d="'+fib+'" stroke="'+shade(ec,.4)+'" stroke-width=".9" stroke-opacity=".32" fill="none"/>'
       +'<ellipse cx="'+x+'" cy="'+ey+'" rx="'+pu[0]+'" ry="'+pu[1]+'" fill="#0d0a0f"/>'
       +'<ellipse cx="'+f1(x+ir[0]*.38)+'" cy="'+f1(ey-ir[1]*.4)+'" rx="3.2" ry="2.7" fill="#fff" opacity=".96"/><circle cx="'+f1(x-ir[0]*.4)+'" cy="'+f1(ey+ir[1]*.42)+'" r="1.4" fill="#fff" opacity=".55"/></g>'
-      +(side>0&&Q.cloudy?'<ellipse cx="'+x+'" cy="'+ey+'" rx="'+f1(ir[0]*1.1)+'" ry="'+f1(ir[1]*1.1)+'" fill="url(#'+uid+'cl)"/>':'')
+      +(has(Q.cloudy,side)?'<ellipse cx="'+x+'" cy="'+ey+'" rx="'+f1(ir[0]*1.1)+'" ry="'+f1(ir[1]*1.1)+'" fill="url(#'+uid+'cl)"/>':'')
       +'<rect x="'+f1(x-hx)+'" y="'+f1(ey-tk*.55)+'" width="'+f1(hx*2)+'" height="'+f1(tk*.55)+'" fill="url(#'+uid+'lid)"/></g>'
       +'<path d="'+ald+'" fill="none" stroke="#120d12" stroke-opacity=".85" stroke-width="1.6" stroke-linejoin="round"/>'
       +'<path d="'+top+'" fill="none" stroke="#120d12" stroke-width="3" stroke-linecap="round"/></g>'
@@ -813,7 +827,7 @@ function buildPet(cfg,uid,o){
   return '<svg class="pet '+(cat?'cat':'dog')+(o.static?' static':'')+'" viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+label+'" style="--glow:'+(o.glow==null?.55:o.glow)+';--lx:0;--ly:0;--hr:0;--sl:0;--amp:5;--wagdur:2.6s">'
     +defs
     +'<g class="shadow"><ellipse cx="'+(188-bw*.12)+'" cy="392" rx="'+(bw+58)+'" ry="17" fill="url(#'+uid+'gs)"/><ellipse cx="196" cy="390" rx="'+(bw*.9)+'" ry="7" fill="url(#'+uid+'gs)"/></g>'
-    +'<g class="pose">'+wingSVG+tailSVG
+    +'<g transform="translate(0 '+drop+')"><g class="pose">'+wingSVG+tailSVG
     +'<g class="body-g">'+hind+legs+body+cloth+chinSh+collar+neckwear+gear+leashSVG+'</g>'
     +'<g class="head"><g class="head-bob">'+ruff+earsBack+tufts
     +fuzz(cx,cy,hw,hh,o.thumb?30:60,fuzzLen,Math.PI*.85,Math.PI*2.15,PT.cap?acc:coat)
@@ -821,7 +835,7 @@ function buildPet(cfg,uid,o){
     +'<g clip-path="url(#'+uid+'h)">'+hOv+fur(cx,cy,hw,hh,260,furLen,cx,cy+hh*.38)+'</g>'
     +'<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'" fill="url(#'+uid+'hs)"/><ellipse cx="'+cx+'" cy="'+cy+'" rx="'+hw+'" ry="'+hh+'" fill="url(#'+uid+'rm)"/>'
     +muzzle+nose+mclosed+mop+whisk+cheeks+eyeL+eyeR+glassSVG+earsFront+hatSVG+halo
-    +'</g></g></g></svg>';
+    +'</g></g></g></g></svg>';
 }
 
 /* =========================================================
@@ -1039,7 +1053,7 @@ var OUTFIT_ROWS=[
  {id:'oharness',label:'Harness color',pal:CLOTHC,get:function(p){return p.outfit.harnessColor},set:function(p,v){p.outfit.harnessColor=v},show:function(p){return p.outfit.harness}},
  {id:'oleash',label:'Leash color',pal:CLOTHC,get:function(p){return p.outfit.leashColor},set:function(p,v){p.outfit.leashColor=v},show:function(p){return p.outfit.leash}}
 ];
-var QUIRK_ROWS=[{id:'oeye2',label:'Second eye color',pal:EYEC,get:function(p){return p.quirks.eye2},set:function(p,v){p.quirks.eye2=v},show:function(p){return p.quirks.hetero}}];
+var QUIRK_ROWS=[{id:'oeye2',label:'Second eye color',pal:EYEC,get:function(p){return p.quirks.eye2},set:function(p,v){p.quirks.eye2=v},show:function(p){return !!p.quirks.hetero}}];
 var ANGEL_ROWS=[
  {id:'halo',label:'Halo',pal:HALOC,get:function(p){return p.haloColor},set:function(p,v){p.haloColor=v},show:function(p){return p.halo}},
  {id:'wings',label:'Wings',pal:WINGC,get:function(p){return p.wingColor},set:function(p,v){p.wingColor=v},show:function(p){return p.wings}}
@@ -1054,6 +1068,7 @@ function buildCreateUI(){
   $('#angelRows').innerHTML=ANGEL_ROWS.map(rowHTML).join('');
   OUTFIT_ROWS.concat(QUIRK_ROWS).forEach(function(r){$('[data-rows~="'+r.id+'"]').insertAdjacentHTML('beforeend',rowHTML(r))});
   $('#quirkChips').innerHTML=QUIRKS.map(function(q){return '<button type="button" class="chip" data-q="'+q[0]+'" aria-pressed="false">'+q[1]+'</button>'}).join('');
+  $('#quirkSides').innerHTML=QSIDES.map(function(q){return '<div class="qrow"><span class="qlabel">'+q[1]+'</span><div class="chips"><button type="button" class="chip" data-qs="'+q[0]+':" aria-pressed="false">None</button>'+q[2].split('').map(function(c){return '<button type="button" class="chip" data-qs="'+q[0]+':'+c+'" aria-pressed="false">'+QWORD[c]+'</button>'}).join('')+'</div></div>'}).join('');
   var ofc=function(key,map){return Object.keys(map).map(function(k){return '<button type="button" class="chip" data-of="'+key+':'+k+'" aria-pressed="false">'+map[k]+'</button>'}).join('')};
   $('#topChips').innerHTML=ofc('top',TOPS);$('#neckChips').innerHTML=ofc('neck',NECKS);$('#hatChips').innerHTML=ofc('hat',HATS);$('#glassChips').innerHTML=ofc('glasses',GLASSES);
   $('#gearChips').innerHTML='<button type="button" class="chip" data-oft="harness" aria-pressed="false">Harness</button><button type="button" class="chip" data-oft="leash" aria-pressed="false">Leash</button>';
@@ -1084,6 +1099,7 @@ function syncCreate(){
   $$('.breed').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.breed===p.breed)});
   syncRows(ROWS,$('#colorRows'));syncRows(ANGEL_ROWS,$('#angelRows'));syncRows(OUTFIT_ROWS,$('#wardrobe'));syncRows(QUIRK_ROWS,$('#quirks'));
   $$('[data-q]').forEach(function(c){c.setAttribute('aria-pressed',!!p.quirks[c.dataset.q])});
+  $$('[data-qs]').forEach(function(c){var kv=c.dataset.qs.split(':');c.setAttribute('aria-pressed',(p.quirks[kv[0]]||'')===kv[1])});
   $$('[data-of]').forEach(function(c){var kv=c.dataset.of.split(':');c.setAttribute('aria-pressed',p.outfit[kv[0]]===kv[1])});
   $$('[data-oft]').forEach(function(c){c.setAttribute('aria-pressed',!!p.outfit[c.dataset.oft])});
   $$('[data-pat]').forEach(function(c){c.setAttribute('aria-pressed',c.dataset.pat===p.pattern)});
@@ -1116,6 +1132,7 @@ function wireCreate(){
     scope.addEventListener('input',function(e){if(e.target.type!=='color')return;var row=e.target.closest('[data-row]');var r=list.filter(function(x){return x.id===row.dataset.row})[0];r.set(state.pet,e.target.value);syncRows(list,scope);renderPreview();saveSoon()});
   }
   colorEvents($('#colorRows'),ROWS);colorEvents($('#angelRows'),ANGEL_ROWS);colorEvents($('#wardrobe'),OUTFIT_ROWS);colorEvents($('#quirks'),QUIRK_ROWS);
+  $('#quirkSides').addEventListener('click',function(e){var c=e.target.closest('[data-qs]');if(!c)return;var kv=c.dataset.qs.split(':');state.pet.quirks[kv[0]]=kv[1];changed()});
   $('#quirkChips').addEventListener('click',function(e){var c=e.target.closest('[data-q]');if(!c)return;var k=c.dataset.q;state.pet.quirks[k]=!state.pet.quirks[k];changed()});
   ['topChips','neckChips','hatChips','glassChips'].forEach(function(id){$('#'+id).addEventListener('click',function(e){var c=e.target.closest('[data-of]');if(!c)return;var kv=c.dataset.of.split(':');state.pet.outfit[kv[0]]=kv[1];if(kv[0]==='top'&&TOPDEF[kv[1]]){state.pet.outfit.topColor=TOPDEF[kv[1]];state.pet.outfit.topTrim=null}changed()})});
   $('#gearChips').addEventListener('click',function(e){var c=e.target.closest('[data-oft]');if(!c)return;var k=c.dataset.oft;state.pet.outfit[k]=!state.pet.outfit[k];changed()});
